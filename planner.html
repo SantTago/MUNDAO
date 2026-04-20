@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TC Planner — Calendário de Conteúdo</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--bg4:#2d333b;
+  --border:#30363d;--text:#c9d1d9;--text2:#8b949e;--text3:#6e7681;
+  --blue:#58a6ff;--green:#3fb950;--yellow:#e3b341;--red:#f85149;--purple:#bc8cff;--orange:#f0883e;
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;min-height:100vh;display:flex;flex-direction:column}
+#app{display:flex;flex:1;overflow:hidden;height:100vh}
+#sidebar{width:230px;min-width:230px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+#calendar-area{flex:1;overflow-y:auto;padding:20px}
+#sidebar-header{padding:12px 14px;border-bottom:1px solid var(--border);font-weight:600;font-size:13px;color:var(--text2);letter-spacing:.05em;text-transform:uppercase}
+#client-search{padding:8px 12px;border-bottom:1px solid var(--border)}
+#client-search input{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 9px;font-size:13px;outline:none}
+#client-search input:focus{border-color:var(--blue)}
+#client-list{overflow-y:auto;flex:1}
+.client-item{padding:8px 14px;cursor:pointer;border-left:3px solid transparent;display:flex;align-items:center;gap:8px;transition:.15s}
+.client-item:hover{background:var(--bg3)}
+.client-item.active{background:var(--bg3);border-left-color:var(--blue)}
+.client-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.client-name{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.client-ig{font-size:11px;color:var(--text3)}
+#sidebar-footer{padding:10px 12px;border-top:1px solid var(--border)}
+#btn-folder{width:100%;padding:7px;background:var(--bg3);border:1px dashed var(--border);color:var(--text2);border-radius:6px;cursor:pointer;font-size:12px;transition:.15s}
+#btn-folder:hover{border-color:var(--blue);color:var(--blue)}
+#folder-status{font-size:11px;color:var(--text3);margin-top:6px;text-align:center;word-break:break-all}
+#topbar h2{font-size:15px;font-weight:600;flex:1}
+.tb-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 12px;cursor:pointer;font-size:13px;transition:.15s}
+.tb-btn:hover{border-color:var(--blue);color:var(--blue)}
+#month-nav{display:flex;align-items:center;gap:8px}
+#month-label{font-size:14px;font-weight:600;min-width:130px;text-align:center}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-dow{text-align:center;font-size:11px;font-weight:600;color:var(--text3);padding:6px 0;text-transform:uppercase;letter-spacing:.05em}
+.cal-day{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px;min-height:90px;cursor:pointer;transition:.15s;position:relative}
+.cal-day:hover{border-color:var(--blue);background:var(--bg3)}
+.cal-day.empty{background:transparent;border-color:transparent;cursor:default;pointer-events:none}
+.cal-day.today{border-color:var(--yellow)}
+.cal-day.has-post{border-left:3px solid var(--blue)}
+.cal-day.has-files::after{content:'📁';position:absolute;top:6px;right:6px;font-size:11px}
+.cal-day-num{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:4px}
+.cal-day-title{font-size:11px;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.cal-day-tag{display:inline-block;font-size:10px;padding:1px 5px;border-radius:3px;margin-top:4px;margin-right:2px}
+.cal-day-tag.post{background:#1f2d44;color:var(--blue)}
+.cal-day-tag.story{background:#1f2d2f;color:var(--green)}
+#modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;padding:20px;overflow-y:auto}
+#modal-overlay.open{display:flex;align-items:flex-start;justify-content:center}
+#modal{background:var(--bg2);border:1px solid var(--border);border-radius:12px;width:100%;max-width:800px}
+#modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+#modal-header h3{font-size:16px;font-weight:700}
+#modal-close{background:none;border:none;color:var(--text2);font-size:22px;cursor:pointer;line-height:1;padding:0 4px}
+#modal-close:hover{color:var(--text)}
+#modal-tabs{display:flex;gap:4px;padding:0 20px;border-bottom:1px solid var(--border)}
+.modal-tab{padding:10px 14px;background:none;border:none;color:var(--text2);cursor:pointer;font-size:13px;border-bottom:2px solid transparent;transition:.15s}
+.modal-tab:hover{color:var(--text)}
+.modal-tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.tab-panel{display:none;padding:20px}
+.tab-panel.active{display:block}
+.post-section{background:var(--bg3);border-radius:8px;padding:12px;margin-bottom:10px;position:relative}
+.post-section label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:5px}
+.post-section .val{font-size:13px;line-height:1.6;color:var(--text)}
+.post-section textarea{width:100%;background:var(--bg4);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:8px;font-size:13px;resize:vertical;font-family:inherit;outline:none;min-height:80px}
+.post-section textarea:focus{border-color:var(--blue)}
+.copy-btn{position:absolute;top:10px;right:10px;background:var(--bg4);border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer}
+.copy-btn:hover{color:var(--blue);border-color:var(--blue)}
+#gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-bottom:12px}
+.gallery-item{aspect-ratio:1;border-radius:8px;overflow:hidden;background:var(--bg3);border:1px solid var(--border);cursor:pointer;position:relative}
+.gallery-item img{width:100%;height:100%;object-fit:cover;display:block}
+.gal-overlay{position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;gap:6px;opacity:0;transition:.2s}
+.gallery-item:hover .gal-overlay{opacity:1}
+.gal-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:4px 7px;font-size:11px;cursor:pointer}
+.gal-btn:hover{background:var(--blue);color:#000;border-color:var(--blue)}
+.upload-zone{border:2px dashed var(--border);border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:.15s;margin-bottom:12px}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--blue);background:rgba(88,166,255,.05)}
+.upload-zone p{color:var(--text2);font-size:13px;margin-bottom:4px}
+.upload-zone small{color:var(--text3);font-size:11px}
+.dl-btn{display:inline-flex;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px 11px;font-size:12px;cursor:pointer;transition:.15s}
+.dl-btn:hover{border-color:var(--green);color:var(--green)}
+.dl-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.no-files{color:var(--text3);font-size:13px;padding:8px 0}
+.video-wrap{background:var(--bg3);border-radius:8px;padding:12px;margin-bottom:12px}
+.video-wrap video{width:100%;border-radius:6px;max-height:280px;margin-top:8px}
+.sec-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
+.prompt-box{background:#0d1117;border:1px solid var(--purple);border-radius:8px;padding:14px;margin-top:16px}
+.prompt-box-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.prompt-box-title{font-size:12px;font-weight:700;color:var(--purple);letter-spacing:.05em;text-transform:uppercase}
+.prompt-copy-btn{background:var(--purple);border:none;color:#000;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;transition:.15s}
+.prompt-copy-btn:hover{background:#d4a9ff}
+.prompt-copy-btn.copied{background:var(--green);color:#000}
+.prompt-ta{width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text2);border-radius:6px;padding:10px;font-size:11px;font-family:monospace;resize:vertical;min-height:160px;max-height:260px;outline:none;line-height:1.5}
+.prompt-ta:focus{border-color:var(--purple)}
+#client-view{display:none;position:fixed;inset:0;background:var(--bg);z-index:200;overflow-y:auto;padding:24px}
+#client-view.open{display:block}
+#cv-header{max-width:760px;margin:0 auto 20px;display:flex;align-items:center;justify-content:space-between}
+.cv-card{max-width:760px;margin:0 auto 12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px}
+.cv-date{font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
+.cv-title{font-size:16px;font-weight:700;margin-bottom:3px}
+.cv-sub{font-size:13px;color:var(--text2);margin-bottom:8px}
+.cv-cap{font-size:13px;line-height:1.6;color:var(--text2);margin-bottom:8px;white-space:pre-wrap}
+.cv-story{background:var(--bg3);border-radius:6px;padding:8px;font-size:12px;color:var(--purple);margin-bottom:6px}
+.cv-ht{font-size:11px;color:var(--text3)}
+.cv-imgs{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.cv-imgs img{height:80px;border-radius:6px;object-fit:cover;cursor:pointer}
+#lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:300;align-items:center;justify-content:center}
+#lightbox.open{display:flex}
+#lightbox img{max-width:90vw;max-height:90vh;object-fit:contain;border-radius:8px}
+#lb-close{position:fixed;top:14px;right:18px;background:none;border:none;color:#fff;font-size:30px;cursor:pointer;z-index:301}
+.badge{background:var(--bg4);color:var(--text2);border-radius:4px;padding:2px 7px;font-size:11px;margin-left:6px}
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+</style>
+</head>
+<body>
+<div id="app">
+<div id="sidebar">
+  <div id="sidebar-header">TC Planner <span class="badge" id="client-count">0</span></div>
+  <div id="client-search"><input id="search-input" placeholder="Buscar cliente..." oninput="filterClients()"></div>
+  <div id="client-list"></div>
+  <div id="sidebar-footer">
+    <button id="btn-folder" onclick="pickRootFolder()">📂 Selecionar pasta raiz</button>
+    <div id="folder-status">Nenhuma pasta conectada</div>
+  </div>
+</div>
+<div id="main">
+  <div id="topbar">
+    <h2 id="topbar-title">Selecione um cliente</h2>
+    <div id="month-nav" style="display:none">
+      <button class="tb-btn" onclick="changeMonth(-1)">‹</button>
+      <span id="month-label"></span>
+      <button class="tb-btn" onclick="changeMonth(1)">›</button>
+    </div>
+    <button class="tb-btn" id="btn-cv" onclick="openClientView()" style="display:none">👁 Visão do cliente</button>
+    <button class="tb-btn" id="btn-refresh" onclick="refreshFolders()" style="display:none" title="Recarregar arquivos">↺</button>
+  </div>
+  <div id="calendar-area">
+    <div id="calendar">
+      <div style="text-align:center;padding:60px 20px;color:var(--text3)">
+        <div style="font-size:48px;margin-bottom:16px">📅</div>
+        <div style="font-size:15px">Selecione um cliente na barra lateral</div>
+        <div style="font-size:12px;margin-top:8px">Conecte sua pasta raiz para salvar e acessar arquivos do disco</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div id="modal">
+    <div id="modal-header">
+      <h3 id="modal-title"></h3>
+      <button id="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div id="modal-tabs">
+      <button class="modal-tab active" onclick="switchTab('content')">📝 Conteúdo</button>
+      <button class="modal-tab" onclick="switchTab('files')">📁 Arquivos</button>
+    </div>
+    <div id="tab-content" class="tab-panel active"><div id="post-content"></div></div>
+    <div id="tab-files" class="tab-panel"><div id="files-content"></div></div>
+  </div>
+</div>
+
+<div id="client-view">
+  <div id="cv-header">
+    <div>
+      <div style="font-size:20px;font-weight:700" id="cv-name"></div>
+      <div style="font-size:13px;color:var(--text3);margin-top:2px" id="cv-ig"></div>
+    </div>
+    <button class="tb-btn" onclick="closeClientView()">✕ Fechar</button>
+  </div>
+  <div id="cv-cards"></div>
+</div>
+
+<div id="lightbox" onclick="if(event.target===this||event.target.id==='lightbox')closeLightbox()">
+  <button id="lb-close" onclick="closeLightbox()">×</button>
+  <img id="lb-img" src="" alt="">
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// SEED DATA — 19 clients + April 2026
+// ═══════════════════════════════════════════
+const CLIENTS=[
+{id:'calcadeira_carvalho',name:'Calcadeira Carvalho',instagram:'@calcadeira.carvalho',whatsapp:'(86) 98842-5028',nicho:'Calçados femininos e masculinos',color:'#58a6ff',posts:{
+'2026-04-17':{title:'CONFORTO QUE TRANSFORMA',subtitle:'Sandálias e sapatos para arrasar no final de semana',cta:'Venha experimentar — (86) 98842-5028',caption:'O final de semana pede conforto sem abrir mão do estilo. Na Calcadeira Carvalho você encontra sandálias e sapatos que combinam com cada momento do seu dia. Qualidade, variedade e o melhor atendimento de Teresina.',hashtags:'#calcadeiracarvalho #calcadosfemininos #sandaliasestilosas #sapatosfemininos #teresina #modateresina #calcadospi #confortocomestilo',story:'Enquete: "Qual o seu estilo preferido para o findi? 👠 Sandália ou Scarpin?" com foto do produto em destaque'},
+'2026-04-20':{title:'NOVIDADE NA LOJA',subtitle:'Modelos exclusivos chegando para você',cta:'Chame no WhatsApp: (86) 98842-5028',caption:'Segunda chegou e com ela novidades incríveis na Calcadeira Carvalho! Modelos fresquinhos para a sua semana começar com o pé direito — literalmente.',hashtags:'#calcadeiracarvalho #novidades #calcadosfemininos #lancamento #teresina #modapi #sapatos #tendencia',story:'Unboxing de novos modelos com chamada "Esses acabaram de chegar — corre ver!"'},
+'2026-04-22':{title:'PRESENTE IDEAL PARA MAMÃE',subtitle:'Dia das Mães chegando — calçados que ela vai amar',cta:'Garanta já o presente: (86) 98842-5028',caption:'O Dia das Mães está chegando e a Calcadeira Carvalho tem o presente perfeito para ela! Calçados confortáveis e estilosos que toda mãe merece ganhar.',hashtags:'#diadasmaes #presenteperfeito #calcadeiracarvalho #maes #calcadosfemininos #teresina',story:'Countdown "Faltam X dias para o Dia das Mães — já sabe o que dar?" com sticker de contagem regressiva'},
+'2026-04-24':{title:'ELE TAMBÉM MERECE',subtitle:'Linha masculina: conforto e estilo em cada passo',cta:'Conheça nossa linha masculina',caption:'Não é só ela que merece calçados incríveis! A Calcadeira Carvalho tem uma linha masculina completa: desde o casual ao social.',hashtags:'#calcadeiracarvalho #calcadosmasculinos #sapatosmasculinos #homem #estilo #moda #teresina',story:'"Sabia que temos linha masculina completa? Arrasta pra ver os modelos!" — carrossel de produtos'},
+'2026-04-27':{title:'CLIENTES QUE AMAM',subtitle:'Veja o que dizem quem já comprou conosco',cta:'Seja o próximo — venha nos visitar!',caption:'Nada melhor do que clientes satisfeitos! Na Calcadeira Carvalho cada cliente sai com o par certo e um sorriso no rosto.',hashtags:'#calcadeiracarvalho #clientessatisfeitos #depoimento #teresina #calcados #qualidade',story:'Repost de depoimento de cliente ou "Manda a foto do seu par novo!" com sticker de foto'},
+}},
+{id:'centro_medico_camocim',name:'Centro Médico Camocim',instagram:'@centromedicodecamocim_',nicho:'Clínica médica multidisciplinar',color:'#3fb950',posts:{
+'2026-04-17':{title:'CUIDE DA SUA SAÚDE',subtitle:'Consultas e exames preventivos — não espere os sintomas',cta:'Agende sua consulta hoje',caption:'Prevenir é sempre melhor do que remediar. No Centro Médico Camocim você tem acesso a consultas e exames completos com profissionais qualificados.',hashtags:'#centromedicocamocim #saude #prevencao #consulta #exames #camocim #clinica',story:'"Quando foi sua última consulta preventiva?" — enquete Sim/Faz tempo'},
+'2026-04-20':{title:'ESPECIALISTAS QUE VOCÊ PRECISA',subtitle:'Todas as especialidades em um só lugar',cta:'Conheça nossas especialidades',caption:'Cardiologia, clínica geral, pediatria e muito mais — tudo no Centro Médico Camocim. Facilidade, conforto e atendimento humanizado para toda a família.',hashtags:'#centromedicocamocim #especialidades #cardiologia #pediatria #clinicageral #camocim',story:'Carrossel "Sabia que temos essas especialidades?"'},
+'2026-04-22':{title:'AGENDE COM FACILIDADE',subtitle:'Marque sua consulta online ou por telefone',cta:'Ligue ou mande mensagem agora',caption:'Marcar consulta nunca foi tão fácil! No Centro Médico Camocim você agenda pelo telefone, WhatsApp ou pessoalmente.',hashtags:'#centromedicocamocim #agendamento #consulta #facilidade #camocim #saude',story:'Sticker de link para WhatsApp + "Aperte aqui e agende agora"'},
+'2026-04-24':{title:'SAÚDE DE QUEM VOCÊ AMA',subtitle:'Cuidar da família começa com prevenção',cta:'Traga sua família para uma consulta',caption:'A saúde da sua família é o maior presente que você pode dar. No Centro Médico Camocim atendemos crianças, adultos e idosos.',hashtags:'#centromedicocamocim #saudefamiliar #familia #camocim #saude',story:'"Você cuida da saúde da sua família?" — quiz com 3 perguntas rápidas'},
+'2026-04-27':{title:'EXAMES COM RESULTADO RÁPIDO',subtitle:'Laboratório completo, resultados confiáveis',cta:'Solicite seus exames hoje',caption:'Exames laboratoriais com rapidez, precisão e comodidade. No Centro Médico Camocim você realiza seus exames e recebe os resultados com agilidade.',hashtags:'#centromedicocamocim #exames #laboratorio #camocim #saude #diagnostico',story:'"Sabia que você pode fazer todos os exames aqui?" — lista rápida'},
+}},
+{id:'clinica_ame_odontologia',name:'Clínica AME Odontologia',instagram:'@clinicaame_odontologia',nicho:'Odontologia estética e geral',color:'#e3b341',posts:{
+'2026-04-17':{title:'SEU SORRISO MERECE',subtitle:'Estética dental que transforma autoestima',cta:'Agende sua avaliação gratuita',caption:'Um sorriso bonito vai muito além da aparência — ele transforma a sua confiança e a forma como você se apresenta ao mundo. Na Clínica AME você encontra os melhores tratamentos estéticos.',hashtags:'#clinicaame #odontologia #esteticadental #sorriso #clareamento #autoestima #dentista',story:'Antes e depois de clareamento dental'},
+'2026-04-20':{title:'LENTES QUE MUDAM TUDO',subtitle:'Lentes de contato dental: o sorriso que você sempre quis',cta:'Saiba mais sobre lentes dentais',caption:'As lentes de contato dental são finas, naturais e transformam o seu sorriso de forma surpreendente.',hashtags:'#clinicaame #lentesdecontato #lentesdental #esteticadental #sorriso',story:'Vídeo explicativo "O que são lentes de contato dental?"'},
+'2026-04-22':{title:'SORRISO MAIS BRANCO',subtitle:'Clareamento dental seguro e eficiente',cta:'Reserve sua sessão de clareamento',caption:'O clareamento dental é um dos procedimentos mais procurados para renovar o sorriso.',hashtags:'#clinicaame #clareamento #sorriso #odontologia #dentes #brancos',story:'Countdown "Promoção de clareamento — últimas vagas desta semana!"'},
+'2026-04-24':{title:'SAÚDE BUCAL EM FAMÍLIA',subtitle:'Do check-up infantil ao adulto — cuide de todos',cta:'Agende para toda a família',caption:'A saúde bucal começa na infância e acompanha a vida toda. Na Clínica AME atendemos toda a família.',hashtags:'#clinicaame #saudebucal #familia #odontologia #criancas',story:'"Quando foi a última vez que seu filho foi ao dentista?"'},
+'2026-04-27':{title:'HARMONIZAÇÃO QUE ENCANTA',subtitle:'Harmonização orofacial para realçar sua beleza natural',cta:'Agende sua avaliação',caption:'A harmonização orofacial é uma das áreas que mais crescem na odontologia moderna.',hashtags:'#clinicaame #harmonizacaorofacial #odontologia #estetica #beleza',story:'"Você conhece a harmonização orofacial?" — mini carrossel explicativo'},
+}},
+{id:'cobrao_centro',name:'Cobrão Centro (Inst. SCJ)',instagram:'@cobrao_centro',nicho:'Educação / reforço escolar',color:'#bc8cff',posts:{
+'2026-04-17':{title:'APRENDIZADO SEM LIMITES',subtitle:'Reforço escolar e apoio pedagógico para todos os níveis',cta:'Conheça nossas turmas — vagas limitadas',caption:'Todo aluno aprende no seu tempo — o que faz a diferença é ter o apoio certo. No Instituto Sagrado Coração de Jesus oferecemos reforço escolar com método eficiente.',hashtags:'#cobrao #institutoSCJ #reforcoscolar #educacao #teresina',story:'"Seu filho está com dificuldade em alguma matéria?" — enquete'},
+'2026-04-20':{title:'MÉTODO QUE FUNCIONA',subtitle:'Nossa metodologia transforma resultados escolares',cta:'Agende uma visita à nossa unidade',caption:'Mais do que ensinar, desenvolvemos o potencial de cada aluno. Nossa metodologia pedagógica personalizada garante evolução real.',hashtags:'#cobrao #institutoSCJ #metodologia #educacao #teresina',story:'Depoimento de pai/responsável sobre a evolução do filho'},
+'2026-04-22':{title:'MATRÍCULAS ABERTAS',subtitle:'Garanta a vaga do seu filho agora mesmo',cta:'Entre em contato e matricule já',caption:'As matrículas estão abertas e as vagas são limitadas!',hashtags:'#cobrao #institutoSCJ #matriculas #educacao #teresina #vagas',story:'Sticker de link para contato + "Últimas vagas — não fique de fora!"'},
+'2026-04-24':{title:'RESULTADOS QUE INSPIRAM',subtitle:'Veja a evolução de quem confiou no nosso método',cta:'Seja o próximo caso de sucesso',caption:'Nada melhor que ver um aluno evoluir de verdade! No Instituto Sagrado Coração de Jesus cada resultado é uma vitória coletiva.',hashtags:'#cobrao #institutoSCJ #resultado #sucesso #educacao #teresina',story:'"Orgulho da semana" — destaque de um aluno que evoluiu'},
+'2026-04-27':{title:'5 DICAS PARA ESTUDAR MELHOR',subtitle:'Técnicas que todo estudante precisa conhecer',cta:'Salva esse post e compartilha com um amigo',caption:'Estudar com eficiência é uma habilidade que se aprende! Aqui estão 5 dicas que nossos professores recomendam.',hashtags:'#cobrao #institutoSCJ #dicasdeestudo #educacao #teresina',story:'Carrossel rápido com as 5 dicas de estudo + link para matrícula'},
+}},
+{id:'coife_odonto_dirceu',name:'Coife Odonto Dirceu',instagram:'@coifedirceu',nicho:'Odontologia — Bairro Dirceu, Teresina PI',color:'#f0883e',posts:{
+'2026-04-17':{title:'SORRIA COM CONFIANÇA',subtitle:'Clareamento e check-up bucal no Dirceu',cta:'Agende sua avaliação gratuita',caption:'Um sorriso saudável começa com o cuidado certo. Na Coife Odonto você realiza seu clareamento e check-up bucal com profissionais experientes.',hashtags:'#coifedirceu #odontologia #clareamento #checkup #sorriso #teresina #dirceu',story:'Enquete "Você faz check-up bucal regularmente?"'},
+'2026-04-20':{title:'IMPLANTE QUE TRANSFORMA',subtitle:'Recupere seu sorriso com implantes de qualidade',cta:'Agende sua avaliação de implante',caption:'O implante dentário é a solução mais moderna e duradoura para substituir dentes perdidos.',hashtags:'#coifedirceu #implante #implantedentario #odontologia #teresina #dirceu',story:'"O que é implante dentário?" — carrossel educativo'},
+'2026-04-22':{title:'ALINHA SEU SORRISO',subtitle:'Aparelho fixo e alinhadores transparentes disponíveis',cta:'Avaliação ortodôntica — marque agora',caption:'Quer alinhar os dentes sem abrir mão do estilo? Na Coife Odonto temos aparelho fixo e alinhadores transparentes.',hashtags:'#coifedirceu #ortodontia #aparelhodentario #alinhador #teresina #dirceu',story:'Antes e depois de ortodontia'},
+'2026-04-24':{title:'DOR DE DENTE? VENHA AGORA',subtitle:'Atendimento de urgência — sem espera',cta:'Ligue agora e seja atendido',caption:'Dor de dente não espera — e na Coife Odonto você tem atendimento rápido para emergências.',hashtags:'#coifedirceu #urgencia #dordedente #odontologia #teresina #dirceu',story:'"Está com dor de dente? Chama a gente agora!" com botão de WhatsApp'},
+'2026-04-27':{title:'HIGIENE QUE PROTEGE',subtitle:'Dicas de higiene bucal para o dia a dia',cta:'Salve e compartilhe com sua família',caption:'A prevenção começa em casa, mas o acompanhamento profissional faz toda a diferença.',hashtags:'#coifedirceu #higienebucal #prevencao #saude #dicas #odontologia #teresina',story:'Carrossel "5 erros que você comete na escovação"'},
+}},
+{id:'diego_baumgratz_psiquiatra',name:'Diego Baumgratz Psiquiatra',instagram:'@diegobaumgratz',nicho:'Psiquiatria · Saúde Mental',color:'#58a6ff',posts:{
+'2026-04-17':{title:'CUIDAR DE VOCÊ É URGENTE',subtitle:'Buscar ajuda psiquiátrica não é fraqueza — é coragem',cta:'Agende sua consulta. Cuide da sua mente hoje.',caption:'Você não precisa esperar o colapso para pedir ajuda. A psiquiatria existe para te apoiar em qualquer fase da vida.',hashtags:'#saudemental #psiquiatria #diegobaumgratz #ansiedade #depressao #mentalhealth',story:'"Você sabia que ansiedade tem tratamento?" — enquete Sim/Não'},
+'2026-04-20':{title:'ANSIEDADE NÃO É FRESCURA',subtitle:'É um transtorno real com tratamento eficaz',cta:'Fale com um psiquiatra. Você merece apoio.',caption:'Ansiedade não é frescura, fraqueza ou exagero. É um transtorno reconhecido pela OMS que afeta milhões de pessoas.',hashtags:'#ansiedade #saudemental #psiquiatria #tratamento #diegobaumgratz',story:'Carrossel de sintomas de ansiedade'},
+'2026-04-22':{title:'DEPRESSÃO TEM TRATAMENTO',subtitle:'E você não precisa enfrentar isso sozinho',cta:'Dê o primeiro passo. Agende sua consulta.',caption:'Depressão não é escolha. Não é preguiça. É uma doença — e tem tratamento.',hashtags:'#depressao #saudemental #psiquiatria #diegobaumgratz #tratamento',story:'"O que você sente quando pensa em pedir ajuda?" — caixa de perguntas'},
+'2026-04-24':{title:'SEU SONO DIZ MUITO SOBRE SUA MENTE',subtitle:'Insônia pode ser sinal de algo mais profundo',cta:'Avalie sua saúde mental. Link na bio.',caption:'Dificuldade para dormir? Pensamentos que não param à noite? Isso pode ser mais do que cansaço.',hashtags:'#insonia #sono #saudemental #psiquiatria #diegobaumgratz',story:'"Você dorme bem?" — enquete com dicas de higiene do sono'},
+'2026-04-27':{title:'TDAH NÃO SOME NA VIDA ADULTA',subtitle:'Muitos adultos vivem sem diagnóstico — e sem tratamento',cta:'Suspeita de TDAH? Agende uma avaliação.',caption:'TDAH não é coisa só de criança. Milhões de adultos vivem com dificuldade de foco, impulsividade e desorganização.',hashtags:'#tdah #saudemental #psiquiatria #diegobaumgratz #diagnostico',story:'"5 sinais de TDAH no adulto que você pode não conhecer"'},
+}},
+{id:'dr_william_rocha',name:'Dr. William Rocha',instagram:'@drwilliamrocha',nicho:'Medicina — Autoridade Premium',color:'#3fb950',posts:{
+'2026-04-17':{title:'MEDICINA COM EXCELÊNCIA',subtitle:'Consulta especializada com foco em resultados reais',cta:'Agende sua consulta',caption:'Medicina de verdade é aquela que olha para o paciente como um todo — com escuta qualificada, diagnóstico preciso e tratamento personalizado.',hashtags:'#drwilliamrocha #medicina #excelencia #medico #saude #consulta',story:'Reflexão médica do Dr. William em vídeo ou card'},
+'2026-04-20':{title:'CUIDE DO SEU CORAÇÃO',subtitle:'Prevenção cardiovascular salva vidas',cta:'Agende seu check-up cardiológico',caption:'Doenças cardiovasculares estão entre as principais causas de morte — mas a maioria é prevenível com acompanhamento médico regular.',hashtags:'#drwilliamrocha #cardiologia #prevencao #coracao #saude #checkup',story:'"Você sabe seu nível de colesterol?" — enquete + dicas'},
+'2026-04-22':{title:'O DIAGNÓSTICO CERTO MUDA TUDO',subtitle:'Experiência e tecnologia a favor da sua saúde',cta:'Busque o especialista certo',caption:'Um diagnóstico preciso é o primeiro passo para o tratamento correto.',hashtags:'#drwilliamrocha #diagnostico #medicina #medico #especialista #saude',story:'Dica médica rápida do Dr. William'},
+'2026-04-24':{title:'HOMEM, CUIDE-SE',subtitle:'Saúde masculina merece atenção e prevenção',cta:'Marque sua consulta de check-up',caption:'Homens tendem a negligenciar a saúde — mas o check-up masculino anual pode detectar problemas antes que se tornem graves.',hashtags:'#drwilliamrocha #saudemasculina #homem #checkup #prevencao #medicina',story:'"Quando foi seu último check-up?" — enquete + CTA'},
+'2026-04-27':{title:'VIVER BEM É UMA ESCOLHA',subtitle:'Saúde, prevenção e qualidade de vida andam juntas',cta:'Invista em você — agende hoje',caption:'Qualidade de vida não é luxo — é o resultado de pequenas escolhas diárias.',hashtags:'#drwilliamrocha #qualidadedevida #saude #medicina #bemestar',story:'"Qual sua maior dificuldade com a saúde hoje?" — caixa de perguntas'},
+}},
+{id:'gabi_osteopatia',name:'Gabi Osteopatia',instagram:'@gabiosteopatia',nicho:'Osteopatia pediátrica — bebês e crianças',color:'#bc8cff',posts:{
+'2026-04-17':{title:'CUIDADO DESDE O INÍCIO',subtitle:'Osteopatia pediátrica para a saúde e bem-estar do bebê',cta:'Saiba mais sobre osteopatia para bebês',caption:'A osteopatia pediátrica oferece um cuidado suave e eficaz para bebês e crianças desde os primeiros dias de vida.',hashtags:'#gabiosteopatia #osteopatia #pediatria #bebe #criancas #saude #maes',story:'"Você sabia que bebês podem fazer osteopatia?" — carrossel educativo'},
+'2026-04-20':{title:'FIM DA CÓLICA',subtitle:'Osteopatia pode aliviar a cólica do seu bebê',cta:'Agende uma avaliação para seu bebê',caption:'A cólica é um dos maiores desafios das mamães nos primeiros meses. A osteopatia pediátrica é uma abordagem suave e natural.',hashtags:'#gabiosteopatia #colica #bebe #osteopatia #maes #maternidade',story:'"Seu bebê tem cólica?" — enquete + dica rápida'},
+'2026-04-22':{title:'CADA FASE DO SEU BEBÊ',subtitle:'Acompanhe o desenvolvimento motor com suporte osteopático',cta:'Agende avaliação do desenvolvimento',caption:'Cada bebê se desenvolve no seu ritmo — mas ter acompanhamento especializado faz toda a diferença.',hashtags:'#gabiosteopatia #desenvolvimento #bebe #motor #osteopatia #maes',story:'Marco do desenvolvimento — "Seu bebê já consegue isso?"'},
+'2026-04-24':{title:'REFLUXO NO BEBÊ',subtitle:'Osteopatia pode ajudar com refluxo e dificuldades na amamentação',cta:'Converse comigo — estou aqui para ajudar',caption:'Refluxo e dificuldades na amamentação são mais comuns do que se pensa.',hashtags:'#gabiosteopatia #refluxo #amamentacao #bebe #osteopatia',story:'"Seu bebê tem refluxo ou dificuldade de mamar?" — enquete'},
+'2026-04-27':{title:'A TRANSFORMAÇÃO QUE UMA MÃE VIU',subtitle:'Histórias reais de quem confiou na osteopatia pediátrica',cta:'Agende para o seu bebê também',caption:'Nada mais emocionante do que ver um bebê se transformar com o cuidado certo.',hashtags:'#gabiosteopatia #depoimento #bebe #osteopatia #maes',story:'Depoimento em vídeo ou texto de uma mãe'},
+}},
+{id:'medicbio',name:'Medicbio',instagram:'@medicbio26',nicho:'Biomedicina e análises clínicas',color:'#f0883e',posts:{
+'2026-04-17':{title:'RESULTADOS QUE VOCÊ PODE CONFIAR',subtitle:'Exames laboratoriais com precisão e agilidade',cta:'Solicite seus exames hoje',caption:'Um bom diagnóstico começa com exames confiáveis. Na Medicbio você tem acesso a análises clínicas de qualidade.',hashtags:'#medicbio #biomedicina #exames #laboratorio #diagnostico #analises',story:'"Você sabe o que seus exames indicam?" — carrossel educativo'},
+'2026-04-20':{title:'PREVINA ANTES DE TRATAR',subtitle:'Exames preventivos que todo adulto deve fazer',cta:'Agende seu painel preventivo',caption:'Você sabia que exames preventivos regulares podem detectar doenças antes dos sintomas?',hashtags:'#medicbio #prevencao #exames #laboratorio #saude #biomedicina',story:'"Quando foi a última vez que você fez exames?"'},
+'2026-04-22':{title:'O QUE FAZ UM BIOMÉDICO?',subtitle:'Conheça a ciência por trás dos seus exames',cta:'Siga e aprenda mais sobre sua saúde',caption:'O biomédico é o profissional especializado em análises clínicas e diagnóstico laboratorial.',hashtags:'#medicbio #biomedico #biomedicina #ciencia #exames #laboratorio',story:'"Você sabia que o biomédico faz isso?" — curiosidades'},
+'2026-04-24':{title:'SUA SAÚDE HORMONAL IMPORTA',subtitle:'Exames hormonais para a saúde da mulher',cta:'Solicite seu perfil hormonal',caption:'Cansaço, mudanças de humor, irregularidades menstruais — seu corpo pode estar sinalizando um desequilíbrio hormonal.',hashtags:'#medicbio #hormônios #saudefeminina #exames #laboratorio #biomedicina',story:'"Você já fez seu perfil hormonal?" — enquete'},
+'2026-04-27':{title:'RESULTADO NO SEU CELULAR',subtitle:'Acesse seus exames de onde estiver',cta:'Saiba como funciona o acesso online',caption:'Praticidade e tecnologia a serviço da sua saúde. Na Medicbio seus resultados ficam disponíveis online.',hashtags:'#medicbio #resultado #online #tecnologia #exames #laboratorio',story:'Demonstração rápida de como acessar os resultados online'},
+}},
+{id:'ortopedia_reabilitar',name:'Ortopedia Reabilitar',instagram:'@ortopediareabilitar',nicho:'Órtese, prótese e reabilitação',color:'#3fb950',posts:{
+'2026-04-17':{title:'REABILITAR É RECOMEÇAR',subtitle:'Movimento, independência e qualidade de vida',cta:'Conheça nossos tratamentos de reabilitação',caption:'Cada passo dado durante a reabilitação é uma vitória. Na Ortopedia Reabilitar acreditamos que o movimento devolvido é também a confiança restaurada.',hashtags:'#ortopediareabilitar #reabilitacao #ortese #protese #movimento #saude',story:'Depoimento de paciente — "Minha história de reabilitação"'},
+'2026-04-20':{title:'ÓRTESE SOB MEDIDA',subtitle:'Cada corpo é único — sua órtese também deve ser',cta:'Agende sua avaliação',caption:'A órtese personalizada é fabricada especialmente para o seu corpo, garantindo conforto, funcionalidade e resultado real.',hashtags:'#ortopediareabilitar #ortese #personalizada #reabilitacao #ortopedia',story:'"Você sabe o que é uma órtese?" — carrossel educativo'},
+'2026-04-22':{title:'PRÓTESE QUE LIBERTA',subtitle:'Tecnologia a serviço do movimento e da independência',cta:'Conheça nossas soluções em próteses',caption:'Uma prótese bem indicada e bem adaptada pode transformar completamente a qualidade de vida.',hashtags:'#ortopediareabilitar #protese #tecnologia #independencia #reabilitacao',story:'Curiosidade sobre evolução das próteses'},
+'2026-04-24':{title:'PÓS-CIRÚRGICO COM SUPORTE',subtitle:'Acompanhamento especializado em cada fase da recuperação',cta:'Inicie sua reabilitação pós-cirúrgica',caption:'A reabilitação pós-cirúrgica adequada acelera a recuperação e previne complicações.',hashtags:'#ortopediareabilitar #poscirurgico #reabilitacao #recuperacao #ortopedia',story:'"Você passou por cirurgia ortopédica?" — enquete + info'},
+'2026-04-27':{title:'QUEM CUIDA DE VOCÊ',subtitle:'Equipe multidisciplinar para sua reabilitação completa',cta:'Conheça nossa equipe',caption:'Por trás de cada reabilitação bem-sucedida existe uma equipe comprometida com o seu progresso.',hashtags:'#ortopediareabilitar #equipe #especialistas #reabilitacao #fisioterapia',story:'Apresentação de um membro da equipe'},
+}},
+{id:'prothera_ortese_protese',name:'Prothera Órtese & Prótese',instagram:'@protheraorteseprotese',nicho:'Órtese, prótese e tecnologia assistiva',color:'#58a6ff',posts:{
+'2026-04-17':{title:'TECNOLOGIA A SERVIÇO DA VIDA',subtitle:'Próteses de última geração para uma vida plena',cta:'Conheça nossas soluções tecnológicas',caption:'A tecnologia pode ser a diferença entre a limitação e a liberdade. Na Prothera trabalhamos com dispositivos de última geração.',hashtags:'#prothera #ortese #protese #tecnologia #assistiva #reabilitacao',story:'"O que é tecnologia assistiva?" — carrossel educativo'},
+'2026-04-20':{title:'COLUNA PROTEGIDA',subtitle:'Órteses para coluna com conforto e suporte real',cta:'Agende sua avaliação',caption:'Dores na coluna e escoliose podem ser tratadas com órteses especializadas.',hashtags:'#prothera #ortese #coluna #escoliose #reabilitacao',story:'"Você sofre com dores na coluna?" — enquete'},
+'2026-04-22':{title:'CADA PASSO, UMA CONQUISTA',subtitle:'Próteses para membros inferiores com alta performance',cta:'Fale com nosso especialista',caption:'Cada passo dado com nossa prótese é uma conquista. Soluções personalizadas para membros inferiores.',hashtags:'#prothera #protese #membrosinferiores #reabilitacao #movimento',story:'História inspiradora de um paciente'},
+'2026-04-24':{title:'MOVIMENTOS DEVOLVIDOS',subtitle:'Órteses para membros superiores — precisão e funcionalidade',cta:'Agende avaliação para membro superior',caption:'Lesões em membros superiores podem ser tratadas com órteses funcionais que ajudam na recuperação.',hashtags:'#prothera #ortese #membrossuperiores #reabilitacao',story:'"Você sabia que existem órteses para as mãos?" — antes e depois'},
+'2026-04-27':{title:'FEITO COM PRECISÃO',subtitle:'Da avaliação à entrega — seu dispositivo com qualidade total',cta:'Conheça nosso processo',caption:'Cada órtese e prótese que sai da Prothera passa por um rigoroso processo de avaliação, fabricação e ajuste.',hashtags:'#prothera #processo #fabricacao #ortese #protese #qualidade',story:'Bastidores do processo de fabricação'},
+}},
+{id:'raquel_siqueira_nutri',name:'Raquel Siqueira Nutri',instagram:'@raquelsiqueira.nutri',nicho:'Nutrição · Amamentação · Laserterapia · Taping',color:'#3fb950',posts:{
+'2026-04-17':{title:'NUTRIR É SE AMAR',subtitle:'Alimentação saudável começa com escolhas conscientes',cta:'Cuide de você. Agende sua consulta.',caption:'Nutrir o corpo é um ato de amor-próprio. Cada refeição é uma oportunidade de cuidar de você.',hashtags:'#nutricao #alimentacaosaudavel #raquelsiqueira #saudefeminina #autocuidado',story:'"O que você come quando está estressada?" — caixa de respostas'},
+'2026-04-20':{title:'AMAMENTANDO COM SAÚDE',subtitle:'A nutrição da mãe impacta diretamente o bebê',cta:'Saiba como nutrir você e seu bebê.',caption:'Durante a amamentação, seu corpo trabalha dobrado. A nutrição certa garante mais leite, mais energia.',hashtags:'#amamentacao #nutricaomaterna #maternidade #raquelsiqueira',story:'"Você sabia que a dieta da mãe afeta o sabor do leite?"'},
+'2026-04-22':{title:'LASERTERAPIA: INOVAÇÃO NO SEU CUIDADO',subtitle:'Tratamento moderno que complementa sua nutrição',cta:'Conheça essa tecnologia. Agende uma avaliação.',caption:'A laserterapia chegou para transformar o cuidado com a saúde feminina.',hashtags:'#laserterapia #nutricao #tecnologia #saudefeminina #raquelsiqueira',story:'"Você conhece a laserterapia?" — enquete com explicação rápida'},
+'2026-04-24':{title:'TAPING: SUPORTE QUE FAZ DIFERENÇA',subtitle:'Técnica que apoia seu corpo no dia a dia',cta:'Saiba mais sobre taping. Fale comigo.',caption:'O taping funcional é uma técnica eficaz para reduzir dor, melhorar postura e apoiar o corpo em movimento.',hashtags:'#taping #kinesiofita #nutricao #funcional #raquelsiqueira',story:'"Para que serve o taping?" — carrossel explicativo'},
+'2026-04-27':{title:'GESTAÇÃO PEDE NUTRIÇÃO ESPECIAL',subtitle:'Cada fase da gravidez tem necessidades únicas',cta:'Acompanhamento nutricional para gestantes.',caption:'Durante a gestação, as necessidades nutricionais mudam. Ferro, ácido fólico, cálcio são essenciais.',hashtags:'#gestacao #gravidez #nutricaonagestacao #raquelsiqueira #gestante',story:'"Você está grávida ou planejando engravidar?" — enquete + CTA'},
+}},
+{id:'tons_do_saber',name:'Tons do Saber',instagram:'@tonsdosaber1',nicho:'Educação · Reforço Escolar · Pedagogia',color:'#e3b341',posts:{
+'2026-04-17':{title:'APRENDER É INCRÍVEL',subtitle:'E fica ainda melhor com o apoio certo',cta:'Conheça o Tons do Saber. Link na bio!',caption:'Aprender não é difícil — é incrível quando você tem o suporte certo! No Tons do Saber, cada aluno é único.',hashtags:'#tonsdosaber #reforcoescolar #educacao #aprendizado #criancas #escola',story:'"Você tem dificuldade em alguma matéria?" — enquete interativa'},
+'2026-04-20':{title:'REFORÇO QUE TRANSFORMA NOTAS',subtitle:'Metodologia pensada para cada estilo de aprendizagem',cta:'Matricule seu filho. Vagas limitadas!',caption:'Seu filho tem dificuldade em alguma matéria? O reforço escolar certo faz toda a diferença.',hashtags:'#reforcoescolar #tonsdosaber #educacao #escola #criancas',story:'"Qual matéria seu filho tem mais dificuldade?" — enquete'},
+'2026-04-22':{title:'LIVROS ABREM MUNDOS',subtitle:'Semana Mundial do Livro — 23 de abril',cta:'Qual é o seu livro favorito? Conta nos comentários!',caption:'Amanhã é o Dia Mundial do Livro! A leitura é a base de todo aprendizado.',hashtags:'#diadomundialdelivro #leitura #livros #educacao #tonsdosaber',story:'"Qual foi o último livro que você leu?" — caixa de respostas'},
+'2026-04-24':{title:'MATEMÁTICA SEM MEDO!',subtitle:'Com o método certo, qualquer um aprende',cta:'Reforço de matemática aqui. Fale comigo!',caption:'Matemática não precisa ser um bicho de sete cabeças! Com o método certo qualquer aluno consegue aprender.',hashtags:'#matematica #tonsdosaber #reforcoescolar #educacao #escola',story:'"Você tinha medo de matemática na escola?" — enquete divertida'},
+'2026-04-27':{title:'EDUCAÇÃO É O MELHOR INVESTIMENTO',subtitle:'O futuro começa nas escolhas de hoje',cta:'Invista na educação do seu filho. Fale comigo!',caption:'Investir em educação é o maior presente que você pode dar ao seu filho.',hashtags:'#educacao #tonsdosaber #investimento #futuro #criancas #pais',story:'"Por que você escolheu o Tons do Saber?" — depoimento de pais'},
+}},
+// Large clients (full April)
+{id:'atelier_ortopedia',name:'Atelier Ortopedia',instagram:'@atelier_ortopedia',nicho:'Alta costura ortopédica — palmilhas, órteses estéticas',color:'#bc8cff',posts:{
+'2026-04-01':{title:'SEU CALÇADO FAVORITO PODE ESTAR DESTRUINDO SUA COLUNA',cta:'Olha o seu calçado preferido agora. Ele passa no teste?',story:'Quiz rápido — seu calçado favorito'},
+'2026-04-03':{title:'NOVA COLEÇÃO DE ÓRTESES ESTÉTICAS',subtitle:'Função encontra design',cta:'Órtese que você tem orgulho de usar.',story:'Editorial: nova coleção'},
+'2026-04-06':{title:'PALMILHA DE FARMÁCIA VS PALMILHA PERSONALIZADA',subtitle:'A diferença que muda tudo',cta:'Ainda usando palmilha de prateleira? Me manda uma mensagem.',story:'Comparativo visual'},
+'2026-04-08':{title:'HALLUX VALGUS (JOANETE)',subtitle:'O que realmente funciona — e o que é mito',cta:'Salva esse post — e manda para quem precisa ver.',story:'Carrossel educativo sobre joanete'},
+'2026-04-10':{title:'LOOK DO DIA: ÓRTESE + ESTILO PROFISSIONAL',subtitle:'Prova que ortopedia e moda combinam',cta:'Salva esse look e me conta: qual seria o seu?',story:'Look editorial'},
+'2026-04-13':{title:'DA MOLDAGEM AO PRODUTO FINAL',subtitle:'A arte por trás da órtese personalizada',cta:'Cada produto que sai daqui passou por esse processo.',story:'Bastidores do processo'},
+'2026-04-15':{title:'FASCITE PLANTAR TEM TRATAMENTO',subtitle:'E não precisa de cirurgia',cta:'Sente aquela dor no primeiro passo da manhã? Manda "CALCANHAR" no direct.',story:'Informativo sobre fascite plantar'},
+'2026-04-17':{title:'ATLETA VOLTOU A CORRER',subtitle:'Depoimento real — palmilhas personalizadas',cta:'A história dela começou com uma avaliação. A sua pode começar hoje.',story:'Depoimento de atleta'},
+'2026-04-20':{title:'POR QUE CRIANÇAS PRECISAM DE AVALIAÇÃO ORTOPÉDICA ANTES DOS 10 ANOS',cta:'Seu filho tem pé plano? Me manda uma mensagem.',story:'Informativo pediátrico'},
+'2026-04-22':{title:'EDITORIAL DE OUTONO: PÉS SAUDÁVEIS, ESTILO DE ESTAÇÃO',cta:'O frio chega. O estilo fica.',story:'Editorial de moda outono'},
+'2026-04-24':{title:'ALTA COSTURA ORTOPÉDICA',subtitle:'Integrando órtese em calçados de grife',cta:'Aceita projetos de adaptação de calçados especiais.',story:'Collab com estilistas'},
+'2026-04-27':{title:'DIABETES E PÉS',subtitle:'O que todo diabético precisa saber',cta:'Conhece alguém com diabetes? Manda esse post.',story:'Educativo sobre cuidados com os pés'},
+'2026-04-29':{title:'RETROSPECTIVA: TRANSFORMAÇÕES DE ABRIL',subtitle:'+ lançamento linha de maio',cta:'Maio chega com novidades.',story:'Retrospectiva do mês'},
+}},
+{id:'clinica_vertebra',name:'Clínica Vértebra',instagram:'@clinica.vertebra',nicho:'Quiropraxia | Fisioterapia | RPG',color:'#58a6ff',posts:{
+'2026-04-01':{title:'POR QUE SUA COLUNA DOI MAIS DE MANHÃ?',subtitle:'A ciência por trás da rigidez matinal',cta:'Você sente essa rigidez?',story:'Informativo matinal'},
+'2026-04-03':{title:'ANTES E DEPOIS REAL: ESCOLIOSE FUNCIONAL',subtitle:'8 semanas de RPG',cta:'O primeiro passo é uma avaliação.',story:'Antes e depois de paciente'},
+'2026-04-06':{title:'QUIROPRAXIA DOI?',subtitle:'5 mitos que afastam as pessoas do tratamento',cta:'Qual mito você já acreditou?',story:'Carrossel: 5 mitos'},
+'2026-04-08':{title:'HÉRNIA DE DISCO: CIRURGIA É SEMPRE NECESSÁRIA?',subtitle:'O que os estudos mais recentes dizem',cta:'Conhece alguém esperando por cirurgia de coluna?',story:'Educativo sobre hérnia de disco'},
+'2026-04-10':{title:'BASTIDORES DA CLÍNICA',subtitle:'Um dia de atendimento com o quiroprata',cta:'Aqui você é tratado como pessoa, não como número.',story:'Day-in-the-life'},
+'2026-04-13':{title:'DOR NO NERVO CIÁTICO: GUIA COMPLETO',subtitle:'Como entender e tratar sem cirurgia',cta:'Você ou alguém próximo sofre com ciática?',story:'Guia da ciática'},
+'2026-04-15':{title:'TRABALHA SENTADO 8H POR DIA?',subtitle:'Sua coluna está pagando o preço',cta:'Qual é a sua situação de trabalho? Comenta.',story:'Dicas de ergonomia no trabalho'},
+'2026-04-17':{title:'PACIENTE QUE VOLTOU A PRATICAR ESPORTE',subtitle:'Depoimento em vídeo após tratamento',cta:'O primeiro passo é uma avaliação.',story:'Depoimento em vídeo'},
+'2026-04-20':{title:'RPG X PILATES X FISIOTERAPIA CONVENCIONAL',subtitle:'Qual é o certo para você?',cta:'Ainda em dúvida? Manda mensagem.',story:'Comparativo de tratamentos'},
+'2026-04-22':{title:'DOR DE CABEÇA FREQUENTE PODE SER DA SUA CERVICAL',subtitle:'Entenda a conexão',cta:'Já resolveu a enxaqueca tratando a cervical?',story:'Educativo sobre cervical'},
+'2026-04-24':{title:'QUAL É A SUA DOR?',subtitle:'Quiz de identificação',cta:'Manda as respostas no direct.',story:'Quiz interativo'},
+'2026-04-27':{title:'CRIANÇAS PRECISAM DE AVALIAÇÃO POSTURAL ANTES DOS 12 ANOS',cta:'Você já levou seu filho para avaliação postural?',story:'Informativo pediátrico'},
+'2026-04-29':{title:'RETROSPECTIVA DO MÊS + VITRINE DE RESULTADOS',cta:'Maio já tem vagas abertas — mas são limitadas.',story:'Retrospectiva de abril'},
+}},
+{id:'consultorio_lara_gomes',name:'Consultório Lara Gomes',instagram:'@consultoriolagomes',nicho:'Odontopediatria · Ortodontia · Clínica Geral — Ibiapina-CE',color:'#e3b341',posts:{
+'2026-04-06':{title:'AQUI COMEÇA O SEU SORRISO.',subtitle:'Bem-vindo ao Consultório Lara Gomes!',cta:'Agende sua consulta pelo link na bio.',caption:'Somos uma clínica multidisciplinar em Ibiapina-CE, com uma equipe especializada pronta para cuidar da sua saúde bucal com excelência e comprometimento.',hashtags:'#ConsultorioLaraGomes #Odontologia #IbiapinaCE #SaudeBucal #Dentista',story:'Apresentação da clínica + equipe — Seg 06/04'},
+'2026-04-08':{title:'POST 2 — a definir',cta:'',story:'Qua 08/04'},
+'2026-04-10':{title:'POST 3 — a definir',cta:'',story:'Sex 10/04'},
+'2026-04-13':{title:'POST 4 — a definir',cta:'',story:'Seg 13/04'},
+'2026-04-15':{title:'POST 5 — a definir',cta:'',story:'Qua 15/04'},
+'2026-04-17':{title:'POST 6 — a definir',cta:'',story:'Sex 17/04'},
+'2026-04-20':{title:'POST 7 — a definir',cta:'',story:'Seg 20/04'},
+'2026-04-22':{title:'POST 8 — a definir',cta:'',story:'Qua 22/04'},
+'2026-04-24':{title:'POST 9 — a definir',cta:'',story:'Sex 24/04'},
+'2026-04-27':{title:'POST 10 — a definir',cta:'',story:'Seg 27/04'},
+'2026-04-29':{title:'POST 11 — a definir',cta:'',story:'Qua 29/04'},
+}},
+{id:'eulalia_angelim',name:'Eulalia Angelim',instagram:'@eulalia_angelim',nicho:'Personal Branding | Desenvolvimento Pessoal Feminino',color:'#f0883e',posts:{
+'2026-04-01':{title:'O PRIMEIRO TRIMESTRE ACABOU. VOCÊ ESTÁ ONDE PLANEJOU ESTAR?',cta:'Você está orgulhosa do seu T1?',story:'Reflexão estratégica — fim do T1'},
+'2026-04-03':{title:'AS 3 FRASES QUE DESTROEM SUA AUTORIDADE PROFISSIONAL',subtitle:'E você provavelmente diz uma delas toda semana',cta:'Qual dessas você reconhece em você?',story:'Carrossel: 3 frases sabotadoras'},
+'2026-04-06':{title:'HISTÓRIA PESSOAL DE EULALIA',subtitle:'O momento em que ela parou de se diminuir',cta:'Você já viveu um momento assim?',story:'Reels humanização'},
+'2026-04-08':{title:'POR QUE MULHERES ALTAMENTE COMPETENTES SÃO SUBESTIMADAS',subtitle:'E o que fazer sobre isso',cta:'Salva esse post.',story:'Carrossel educativo'},
+'2026-04-10':{title:'BEFORE/AFTER: TRANSFORMAÇÃO DE POSICIONAMENTO',subtitle:'De cliente real (com permissão)',cta:'Isso foi feito em 30 dias de trabalho juntas.',story:'Before/After de cliente'},
+'2026-04-13':{title:'O QUE SIGNIFICA TER UMA MARCA PESSOAL FORTE',subtitle:'Desmontando o mito da perfeição',cta:'Qual foi sua maior crença errada sobre marca pessoal?',story:'Educativo sobre marca pessoal'},
+'2026-04-15':{title:'A DIFERENÇA ENTRE SER OCUPADA E SER ESTRATÉGICA',subtitle:'Por que mulheres trabalham mais e crescem menos',cta:'Você é ocupada ou estratégica?',story:'Reflexão estratégica'},
+'2026-04-17':{title:'AUTENTICIDADE SEM ESTRATÉGIA NÃO É MARCA PESSOAL',subtitle:'É diário pessoal',cta:'Concorda ou discorda?',story:'Conteúdo polarizador'},
+'2026-04-20':{title:'LIVES, PODCASTS, EVENTOS',subtitle:'Como construir presença pública com intenção',cta:'Qual desses canais você ainda não explorou?',story:'Educativo sobre presença pública'},
+'2026-04-22':{title:'NETWORKING NÃO É SOBRE O QUE VOCÊ PEDE',subtitle:'É sobre quem você se torna para as pessoas',cta:'Qual é o seu maior obstáculo no networking?',story:'Reflexão sobre networking'},
+'2026-04-24':{title:'"EU NÃO SABIA COMO FALAR SOBRE MIM SEM ME SENTIR ARROGANTE"',subtitle:'Depoimento de cliente',cta:'As vagas para a mentoria de maio estão abertas.',story:'Depoimento de cliente'},
+'2026-04-27':{title:'O QUE NINGUÉM TE CONTA SOBRE TRANSIÇÃO DE CARREIRA DEPOIS DOS 35',cta:'Manda "TRANSIÇÃO" no direct.',story:'Educativo para transição de carreira'},
+'2026-04-29':{title:'CARTA PARA A MULHER QUE ESTÁ PRESTES A DESISTIR DO SEU SONHO PROFISSIONAL',cta:'Manda "EU ESTOU PRONTA" no direct.',story:'Carta aberta — conteúdo emocional'},
+}},
+{id:'neuropsicologo_mauricio',name:'Neuropsicologo Mauricio',instagram:'@neuropsicologo.mauricio',nicho:'Neuropsicologia | Saúde Mental | Avaliação Neuropsicológica',color:'#bc8cff',posts:{
+'2026-04-01':{title:'PROCRASTINAÇÃO NÃO É PREGUIÇA. É NEUROLOGIA.',subtitle:'E isso muda tudo',cta:'Marca alguém que sempre é chamado de preguiçoso.',story:'Educativo sobre procrastinação'},
+'2026-04-03':{title:'O QUE É UMA AVALIAÇÃO NEUROPSICOLÓGICA',subtitle:'E por que você deveria fazer uma',cta:'Me manda uma pergunta no direct.',story:'Explainer sobre avaliação'},
+'2026-04-06':{title:'BURNOUT OU DEPRESSÃO?',subtitle:'A maioria confunde — e o tratamento errado piora tudo',cta:'O primeiro passo é uma avaliação.',story:'Carrossel diferenciando burnout e depressão'},
+'2026-04-08':{title:'TDAH EM ADULTOS',subtitle:'Por que só foi diagnosticado agora',cta:'Você se identificou? Manda esse post.',story:'Educativo sobre TDAH em adultos'},
+'2026-04-10':{title:'MAURICIO EM CAMPO',subtitle:'Um dia de atendimentos (humanização)',cta:'Agendar é o primeiro passo.',story:'Day-in-the-life do Mauricio'},
+'2026-04-13':{title:'MEMÓRIA RUIM TEM CURA?',subtitle:'O que a neurociência diz sobre plasticidade cerebral',cta:'Qual é o seu maior problema de memória no dia a dia?',story:'Educativo sobre neuroplasticidade'},
+'2026-04-15':{title:'ANSIEDADE E SEU CÉREBRO',subtitle:'O que acontece neurologicamente durante um ataque de ansiedade',cta:'Entender o que acontece no seu cérebro é o primeiro passo.',story:'Educativo neurológico'},
+'2026-04-17':{title:'SAÚDE MENTAL NO TRABALHO NÃO É PAUSA PARA MEDITAÇÃO',subtitle:'É estrutura organizacional',cta:'Você concorda? Esse debate precisa acontecer.',story:'Conteúdo de opinião'},
+'2026-04-20':{title:'FILHO COM DIFICULDADE DE APRENDIZAGEM',subtitle:'Quando é hora de buscar avaliação neuropsicológica',cta:'Seu filho tem alguma dessas dificuldades?',story:'Informativo para pais'},
+'2026-04-22':{title:'SONO E CÉREBRO',subtitle:'Por que 6h não é suficiente',cta:'Quantas horas você dorme por noite?',story:'Educativo sobre sono e cognição'},
+'2026-04-24':{title:'FAQ: PERGUNTAS MAIS FREQUENTES SOBRE NEUROPSICOLOGIA',cta:'Tem mais perguntas? Manda no direct.',story:'FAQ em carrossel'},
+'2026-04-27':{title:'ENVELHECIMENTO COGNITIVO',subtitle:'O que é normal e o que é sinal de alerta',cta:'Compartilha esse post.',story:'Educativo sobre envelhecimento cognitivo'},
+'2026-04-29':{title:'CUIDAR DO CÉREBRO É O ATO MAIS ESTRATÉGICO QUE VOCÊ PODE FAZER',subtitle:'Reflexão de fechamento',cta:'Maio já tem vagas disponíveis.',story:'Reflexão final do mês'},
+}},
+{id:'oticas_dvision',name:"Óticas D'Vision",instagram:'@oticasdvision.oficial',nicho:'Ótica | Óculos | Moda Premium',color:'#e3b341',posts:{
+'2026-04-01':{title:'O ÓCULOS CERTO PARA O SEU ROSTO',subtitle:'O guia definitivo que a maioria das óticas não te dá',cta:'Salva esse guia antes de comprar o próximo óculos.',story:'Guia de formatos de rosto — carrossel 7 slides'},
+'2026-04-03':{title:'EDITORIAL: FRAMES DE OUTONO 2026',subtitle:'Texturas, cores e atitude',cta:'Qual armação te conquistou?',story:'Reels editorial fashion'},
+'2026-04-06':{title:'LENTE PROGRESSIVA: POR QUE A MAIORIA ODEIA',subtitle:'E o que é diferente na nossa',cta:'Já usou lente progressiva e odiou? Me conta.',story:'Carrossel quebrando objeções'},
+'2026-04-08':{title:'LUZ AZUL: O QUE É REAL E O QUE É MARKETING',subtitle:'A verdade sobre as lentes blue block',cta:'Usa blue block? Conta sua experiência.',story:'Educativo sobre blue block'},
+'2026-04-10':{title:'GUARDA-ROUPA DE ÓCULOS',subtitle:'Como montar looks para diferentes ocasiões',cta:'Qual ocasião você mais sente falta de um óculos certo?',story:'Styling session'},
+'2026-04-13':{title:'DEPOIMENTO REAL DE CLIENTE',subtitle:'Experiência de atendimento na D\'Vision',cta:'Quando você vem ao nosso encontro?',story:'Depoimento real'},
+'2026-04-15':{title:'EXAME DE VISTA: POR QUE FAZER TODO ANO',subtitle:'Mesmo sem sentir nada',cta:'Quando foi o seu último exame de vista?',story:'Educativo sobre saúde ocular'},
+'2026-04-17':{title:'LANÇAMENTO DE FRAME EXCLUSIVO',subtitle:'Coleção limitada — urgência + exclusividade',cta:'Só 30 unidades. Link na bio.',story:'Lançamento urgência'},
+'2026-04-20':{title:'ÓCULOS DE SOL: PROTEÇÃO REAL VS ÓCULOS DE MERCADO',subtitle:'A diferença que danifica seus olhos',cta:'O seu óculos de sol tem certificação UV400?',story:'Educativo sobre UV'},
+'2026-04-22':{title:'BEHIND THE SCENES: MONTAGEM DE UM ÓCULOS DE GRAU',cta:'Você sabia que o seu óculos passa por tudo isso?',story:'Bastidores do laboratório'},
+'2026-04-24':{title:'QUAL É O SEU ESTILO DE ÓCULOS?',subtitle:'Quiz de personalidade',cta:'Mandamos sua indicação de frame no direct!',story:'Quiz interativo de estilo'},
+'2026-04-27':{title:'CRIANÇAS E ÓCULOS',subtitle:'Como fazer o filho aceitar — e até querer usar — o óculos de grau',cta:'Pai ou mãe de criança que precisa de óculos?',story:'Educativo para pais'},
+'2026-04-29':{title:'OS FRAMES MAIS AMADOS DE ABRIL',subtitle:'+ teaser de maio',cta:'Qual foi o seu frame favorito de abril?',story:'Retrospectiva + teaser'},
+}},
+];
+
+// ── State ──
+let currentClient=null,currentYear=2026,currentMonth=3;
+let rootDirHandle=null,currentDayData=null;
+const FILES_CACHE={};
+
+// ── IndexedDB ──
+function openDB(){return new Promise((r,j)=>{const q=indexedDB.open('tcp3',1);q.onupgradeneeded=e=>e.target.result.createObjectStore('h',{keyPath:'k'});q.onsuccess=e=>r(e.target.result);q.onerror=j});}
+async function saveHandle(h){const db=await openDB();const tx=db.transaction('h','readwrite');tx.objectStore('h').put({k:'root',h});return new Promise((r,j)=>{tx.oncomplete=r;tx.onerror=j});}
+async function loadHandle(){const db=await openDB();const tx=db.transaction('h','readonly');const r=tx.objectStore('h').get('root');return new Promise((res,rej)=>{r.onsuccess=()=>res(r.result?.h);r.onerror=rej});}
+
+// ── FS API ──
+async function pickRootFolder(){
+  if(!('showDirectoryPicker' in window)){alert('Use Chrome ou Edge para conectar a pasta de arquivos.');return;}
+  try{const h=await window.showDirectoryPicker({mode:'readwrite'});rootDirHandle=h;await saveHandle(h);updateFolderStatus();if(currentClient)refreshFolders();}catch(e){if(e.name!=='AbortError')console.error(e);}
+}
+async function tryRestoreHandle(){
+  try{const h=await loadHandle();if(!h)return;const p=await h.queryPermission({mode:'readwrite'});if(p==='granted'){rootDirHandle=h;updateFolderStatus();return;}const rq=await h.requestPermission({mode:'readwrite'});if(rq==='granted'){rootDirHandle=h;updateFolderStatus();}}catch(e){}
+}
+function updateFolderStatus(){
+  const el=document.getElementById('folder-status'),rb=document.getElementById('btn-refresh');
+  if(rootDirHandle){el.textContent='✓ '+rootDirHandle.name;el.style.color='var(--green)';if(rb)rb.style.display='';}
+  else{el.textContent='Nenhuma pasta conectada';el.style.color='';if(rb)rb.style.display='none';}
+}
+async function getDirAt(path,create=false){
+  let h=rootDirHandle;for(const s of path){try{h=await h.getDirectoryHandle(s,{create});}catch{return null;}}return h;
+}
+function dayFolder(ds){const d=new Date(ds+'T12:00:00'),dows=['DOM','SEG','TER','QUA','QUI','SEX','SAB'];return`${dows[d.getDay()]}_${String(d.getDate()).padStart(2,'0')}`;}
+function monthFolder(y,m){if(y===2026&&m===3)return'04_Abril_2026';const mn=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];return`${String(m+1).padStart(2,'0')}_${mn[m]}_${y}`;}
+async function readDayFiles(cid,ds){
+  if(!rootDirHandle)return null;
+  const dh=await getDirAt(['clientes',cid,monthFolder(currentYear,currentMonth),dayFolder(ds)]);
+  const res={images:[],video:null,txt:null,folderHandle:dh};
+  if(!dh)return res;
+  try{for await(const[n,h]of dh.entries()){if(h.kind!=='file')continue;const lo=n.toLowerCase();const f=await h.getFile();
+    if(/\.(jpg|jpeg|png|gif|webp)$/.test(lo))res.images.push({name:n,handle:h,url:URL.createObjectURL(f),file:f});
+    else if(/\.(mp4|mov|webm|avi)$/.test(lo))res.video={name:n,handle:h,url:URL.createObjectURL(f),file:f};
+    else if(/\.txt$/.test(lo))res.txt={name:n,handle:h,content:await f.text()};
+  }}catch(e){console.error(e);}return res;
+}
+async function ensureDayFolder(cid,ds){const b=await getDirAt(['clientes',cid,monthFolder(currentYear,currentMonth)],true);if(!b)return null;return b.getDirectoryHandle(dayFolder(ds),{create:true});}
+async function writeFile(dh,f){const fh=await dh.getFileHandle(f.name,{create:true});const w=await fh.createWritable();await w.write(f);await w.close();}
+async function writeTxt(cid,ds,content){let dh=currentDayData?.folderHandle;if(!dh)dh=await ensureDayFolder(cid,ds);if(!dh)return;const fh=await dh.getFileHandle('descricao.txt',{create:true});const w=await fh.createWritable();await w.write(content);await w.close();}
+
+// ── Calendar ──
+function renderCalendar(){
+  if(!currentClient)return;
+  const y=currentYear,m=currentMonth,today=new Date();
+  const fd=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate();
+  const mn=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  document.getElementById('month-label').textContent=`${mn[m]} ${y}`;
+  let h=`<div class="cal-grid"><div class="cal-dow">Dom</div><div class="cal-dow">Seg</div><div class="cal-dow">Ter</div><div class="cal-dow">Qua</div><div class="cal-dow">Qui</div><div class="cal-dow">Sex</div><div class="cal-dow">Sáb</div>`;
+  for(let i=0;i<fd;i++)h+=`<div class="cal-day empty"></div>`;
+  for(let d=1;d<=days;d++){
+    const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const post=currentClient.posts?.[ds],cache=FILES_CACHE[`${currentClient.id}-${ds}`];
+    const hasF=cache?.images?.length>0||!!cache?.video;
+    const isT=today.getFullYear()===y&&today.getMonth()===m&&today.getDate()===d;
+    let cls='cal-day';if(isT)cls+=' today';if(post)cls+=' has-post';if(hasF)cls+=' has-files';
+    const df=dayFolder(ds);
+    let inner=`<div class="cal-day-num">${d} <small style="color:var(--text3);font-size:9px">${df.split('_')[0]}</small></div>`;
+    if(post){inner+=`<div class="cal-day-title" style="color:${currentClient.color}">${eh(post.title||'—')}</div>`;if(post.story)inner+=`<span class="cal-day-tag story">Story</span>`;inner+=`<span class="cal-day-tag post">Post</span>`;}
+    h+=`<div class="${cls}" onclick="openDay('${ds}')">${inner}</div>`;
+  }
+  h+=`</div>`;
+  document.getElementById('calendar').innerHTML=h;
+}
+async function refreshFolders(){
+  if(!currentClient||!rootDirHandle)return;
+  const rb=document.getElementById('btn-refresh');rb.innerHTML='<span class="spinner"></span>';
+  const y=currentYear,m=currentMonth,days=new Date(y,m+1,0).getDate();
+  for(let d=1;d<=days;d++){const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;const f=await readDayFiles(currentClient.id,ds);if(f)FILES_CACHE[`${currentClient.id}-${ds}`]=f;}
+  renderCalendar();rb.textContent='↺';
+}
+
+// ── Modal ──
+let currentDateStr=null;
+async function openDay(ds){
+  currentDateStr=ds;
+  const d=new Date(ds+'T12:00:00');
+  const dn=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'],mn=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  document.getElementById('modal-title').textContent=`${dn[d.getDay()]}, ${d.getDate()} de ${mn[d.getMonth()]} ${d.getFullYear()}`;
+  switchTab('content');renderPostContent(ds);
+  let files=FILES_CACHE[`${currentClient.id}-${ds}`]||null;
+  if(!files&&rootDirHandle){files=await readDayFiles(currentClient.id,ds);if(files)FILES_CACHE[`${currentClient.id}-${ds}`]=files;}
+  currentDayData=files;renderFilesContent(ds,files);
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('open');currentDayData=null;}
+function switchTab(tab){
+  document.querySelectorAll('.modal-tab').forEach((b,i)=>b.classList.toggle('active',(i===0&&tab==='content')||(i===1&&tab==='files')));
+  document.getElementById('tab-content').classList.toggle('active',tab==='content');
+  document.getElementById('tab-files').classList.toggle('active',tab==='files');
+}
+function renderPostContent(ds){
+  const post=currentClient?.posts?.[ds],el=document.getElementById('post-content');
+  if(!post){el.innerHTML=`<div style="color:var(--text3);padding:20px;text-align:center">Nenhum post planejado para este dia.<br><small>Adicione arquivos na aba 📁 Arquivos.</small></div>`;return;}
+  let h='';
+  if(post.title)h+=sec('TÍTULO',post.title,true);
+  if(post.subtitle)h+=sec('SUBTÍTULO',post.subtitle,true);
+  if(post.cta)h+=sec('CTA',post.cta,true);
+  if(post.caption)h+=secTa('LEGENDA',post.caption,'cap-'+ds);
+  if(post.hashtags)h+=secTa('HASHTAGS',post.hashtags,'ht-'+ds);
+  if(post.story)h+=sec('💡 STORY',post.story,true);
+  // AI Prompt section
+  const prompt=buildPrompt(post,currentClient);
+  h+=`<div class="prompt-box">
+    <div class="prompt-box-header">
+      <span class="prompt-box-title">🤖 Prompt ChatGPT — Criar Arte</span>
+      <button class="prompt-copy-btn" id="prompt-copy-btn" onclick="copyPrompt('prompt-ta-${ds}')">Copiar Prompt</button>
+    </div>
+    <textarea class="prompt-ta" id="prompt-ta-${ds}" readonly>${eh(prompt)}</textarea>
+  </div>`;
+  el.innerHTML=h||`<div style="color:var(--text3);padding:20px">Detalhes não disponíveis.</div>`;
+}
+function sec(lbl,val,cp=false){const cb=cp?`<button class="copy-btn" onclick="copyT('${ea(val)}')">Copiar</button>`:'';return`<div class="post-section">${cb}<label>${lbl}</label><div class="val">${eh(val)}</div></div>`;}
+function secTa(lbl,val,id){return`<div class="post-section"><button class="copy-btn" onclick="copyTa('${id}')">Copiar</button><label>${lbl}</label><textarea id="${id}">${eh(val)}</textarea></div>`;}
+function eh(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function ea(s){return(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,'\\n');}
+function copyT(t){navigator.clipboard?.writeText(t);toast('Copiado!');}
+function copyTa(id){const e=document.getElementById(id);if(e){navigator.clipboard?.writeText(e.value);toast('Copiado!');}}
+function copyPrompt(id){
+  const e=document.getElementById(id);if(!e)return;
+  navigator.clipboard?.writeText(e.value);
+  const btn=document.getElementById('prompt-copy-btn');
+  if(btn){btn.textContent='✓ Copiado!';btn.classList.add('copied');setTimeout(()=>{btn.textContent='Copiar Prompt';btn.classList.remove('copied');},2000);}
+  toast('Prompt copiado! Cole no ChatGPT junto com a imagem de referência.');
+}
+function buildPrompt(post,client){
+  const lines=[];
+  lines.push(`[ENVIE JUNTO: uma imagem de referência do ${client.name} para o ChatGPT seguir a identidade visual]`);
+  lines.push(``);
+  lines.push(`Siga EXATAMENTE a identidade visual do post de referência enviado acima (cores, tipografia, estilo gráfico, elementos visuais, layout). Não altere nada da identidade.`);
+  lines.push(``);
+  lines.push(`---`);
+  lines.push(`OBJETIVO:`);
+  lines.push(`Criar posts altamente profissionais, com foco em conversão, engajamento e autoridade, mantendo identidade visual consistente e variação criativa infinita.`);
+  lines.push(``);
+  lines.push(`FORMATOS:`);
+  lines.push(`- Feed: 1080x1350`);
+  lines.push(`- Story: 1080x1920`);
+  lines.push(`- Carrossel: 1080x1350 (múltiplas páginas)`);
+  lines.push(``);
+  lines.push(`---`);
+  lines.push(`REGRAS DE OURO:`);
+  lines.push(`- Nunca repetir layout (sempre variar estrutura, composição e estilo)`);
+  lines.push(`- Manter identidade visual consistente (cores, tipografia e estilo do post de referência)`);
+  lines.push(`- Pensar como uma agência premium`);
+  lines.push(`- Criar sempre algo moderno, limpo e visualmente atrativo`);
+  lines.push(`- Priorizar clareza e impacto visual`);
+  lines.push(`- Evitar poluição visual`);
+  lines.push(``);
+  lines.push(`---`);
+  lines.push(`VARIAÇÃO DE LAYOUT (escolha automaticamente UM diferente a cada criação):`);
+  lines.push(`Lateral (imagem + texto) | Centralizado (impacto) | Dividido em blocos | Minimalista`);
+  lines.push(`Foco humano (pessoa) | Close (detalhe) | Formas orgânicas | Fundo com bloco de cor`);
+  lines.push(`Estilo editorial | Estilo anúncio direto`);
+  lines.push(``);
+  lines.push(`---`);
+  lines.push(`GATILHOS MENTAIS (aplicar automaticamente):`);
+  lines.push(`Urgência | Autoridade | Benefício emocional | Prova implícita (resultado) | Facilidade`);
+  lines.push(``);
+  lines.push(`---`);
+  lines.push(`ESTRUTURA DA COPY:`);
+  lines.push(`1. Headline forte (impacto ou curiosidade)`);
+  lines.push(`2. Subheadline (benefício claro)`);
+  lines.push(`3. Complemento (autoridade ou explicação breve)`);
+  lines.push(`4. CTA direto (ação clara)`);
+  lines.push(``);
+  lines.push(`---`);
+  lines.push(`DADOS DO POST:`);
+  lines.push(``);
+  lines.push(`Cliente: ${client.name}${client.instagram?' | '+client.instagram:''}`);
+  if(client.nicho) lines.push(`Nicho: ${client.nicho}`);
+  lines.push(``);
+  if(post.title) lines.push(`TEMA / HEADLINE: ${post.title}`);
+  if(post.subtitle) lines.push(`SUBTÍTULO: ${post.subtitle}`);
+  if(post.cta) lines.push(`CTA: ${post.cta}`);
+  if(post.caption) lines.push(`\nLEGENDA PRONTA:\n${post.caption}`);
+  if(post.hashtags) lines.push(`\nHASHTAGS: ${post.hashtags}`);
+  if(post.story) lines.push(`\nSTORY IDEA: ${post.story}`);
+  lines.push(``);
+  lines.push(`---`);
+  lines.push(`Crie agora:`);
+  lines.push(`1. O post para FEED (1080x1350) com a copy completa`);
+  lines.push(`2. O post para STORY (1080x1920) adaptado`);
+  lines.push(`Siga todas as regras acima. Seja direto, visual e estratégico.`);
+  return lines.join('\n');
+}
+
+function renderFilesContent(ds,files){
+  const el=document.getElementById('files-content'),df=dayFolder(ds),noRoot=!rootDirHandle;
+  let h=`<div class="upload-zone" id="upload-zone"
+    ondragover="event.preventDefault();this.classList.add('dragover')"
+    ondragleave="this.classList.remove('dragover')"
+    ondrop="handleDrop(event,'${ds}')"
+    onclick="triggerUpload('${ds}')">
+    <p>📂 Soltar arquivos aqui ou clique para selecionar</p>
+    <small>JPG/PNG → post/carrossel &nbsp;|&nbsp; MP4/MOV → story &nbsp;|&nbsp; TXT → descrição</small>
+    ${noRoot?'<br><small style="color:var(--red)">⚠ Conecte a pasta raiz primeiro (barra lateral)</small>':''}
+  </div>
+  <input type="file" id="file-input" multiple style="display:none" onchange="handleFileInput(event,'${ds}')">`;
+  const empty=!files||((!files.images||!files.images.length)&&!files.video&&!files.txt);
+  if(empty){h+=`<div class="no-files">Pasta <code style="color:var(--blue)">${df}/</code> vazia ou não encontrada.</div>`;}
+  else{
+    if(files.images?.length){
+      h+=`<div class="sec-label" style="margin-bottom:8px">IMAGENS (${files.images.length})</div><div id="gallery">`;
+      files.images.forEach(img=>{h+=`<div class="gallery-item" onclick="openLB('${img.url}')"><img src="${img.url}" alt="${img.name}"><div class="gal-overlay"><button class="gal-btn" onclick="event.stopPropagation();openLB('${img.url}')">👁</button><button class="gal-btn" onclick="event.stopPropagation();dlBlob('${img.url}','${img.name}')">⬇</button></div></div>`;});
+      h+=`</div>`;
+    }
+    if(files.video){h+=`<div class="video-wrap"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><span class="sec-label">STORY / VÍDEO</span><button class="dl-btn" onclick="dlBlob('${files.video.url}','${files.video.name}')">⬇ ${files.video.name}</button></div><video src="${files.video.url}" controls></video></div>`;}
+    if(files.txt){h+=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><span class="sec-label">DESCRIÇÃO (descricao.txt)</span><button class="dl-btn" id="dl-txt-btn">⬇ descricao.txt</button></div><div class="post-section"><textarea id="desc-ta" style="min-height:120px">${eh(files.txt.content)}</textarea></div><button class="tb-btn" onclick="saveTxtEdit('${ds}')">💾 Salvar TXT</button>`;}
+    const hasD=files.images?.length||files.video;
+    if(hasD){h+=`<div class="dl-row" style="margin-top:12px">`;(files.images||[]).forEach(img=>{h+=`<button class="dl-btn" onclick="dlBlob('${img.url}','${img.name}')">⬇ ${img.name}</button>`;});if(files.video)h+=`<button class="dl-btn" onclick="dlBlob('${files.video.url}','${files.video.name}')">⬇ ${files.video.name}</button>`;h+=`</div>`;}
+  }
+  const post=currentClient?.posts?.[ds];
+  if(post)h+=`<div style="margin-top:14px;border-top:1px solid var(--border);padding-top:14px"><button class="tb-btn" onclick="saveSeedTxt('${ds}')">📋 Criar descricao.txt do calendário</button><small style="color:var(--text3);margin-left:8px">Gera TXT com título, legenda e hashtags</small></div>`;
+  el.innerHTML=h;
+  const dlb=document.getElementById('dl-txt-btn');
+  if(dlb&&files?.txt){dlb.onclick=()=>{const ta=document.getElementById('desc-ta');const blob=new Blob([ta?ta.value:files.txt.content],{type:'text/plain;charset=utf-8'});dlBlob(URL.createObjectURL(blob),'descricao.txt');};}
+}
+function buildDesc(post){let t='';if(post.title)t+=`TÍTULO: ${post.title}\n`;if(post.subtitle)t+=`SUBTÍTULO: ${post.subtitle}\n`;if(post.cta)t+=`\nCTA:\n${post.cta}\n`;if(post.caption)t+=`\nLEGENDA:\n${post.caption}\n`;if(post.hashtags)t+=`\nHASHTAGS:\n${post.hashtags}\n`;if(post.story)t+=`\nSTORY:\n${post.story}\n`;return t;}
+async function saveSeedTxt(ds){if(!rootDirHandle){alert('Conecte a pasta raiz primeiro.');return;}const post=currentClient?.posts?.[ds];if(!post)return;await writeTxt(currentClient.id,ds,buildDesc(post));toast('descricao.txt criado!');const f=await readDayFiles(currentClient.id,ds);FILES_CACHE[`${currentClient.id}-${ds}`]=f;currentDayData=f;renderFilesContent(ds,f);}
+async function saveTxtEdit(ds){if(!rootDirHandle)return;const ta=document.getElementById('desc-ta');if(!ta)return;await writeTxt(currentClient.id,ds,ta.value);toast('Salvo!');}
+function triggerUpload(ds){if(!rootDirHandle){alert('Conecte a pasta raiz primeiro (barra lateral).');return;}document.getElementById('file-input').setAttribute('data-date',ds);document.getElementById('file-input').click();}
+async function handleFileInput(ev,ds){const files=Array.from(ev.target.files);if(files.length)await uploadFiles(files,ds);ev.target.value='';}
+async function handleDrop(ev,ds){ev.preventDefault();document.getElementById('upload-zone')?.classList.remove('dragover');if(!rootDirHandle){alert('Conecte a pasta raiz primeiro.');return;}const files=Array.from(ev.dataTransfer.files);if(files.length)await uploadFiles(files,ds);}
+async function uploadFiles(files,ds){
+  if(!rootDirHandle)return;
+  let dh=currentDayData?.folderHandle;if(!dh)dh=await ensureDayFolder(currentClient.id,ds);if(!dh){alert('Não foi possível criar a pasta.');return;}
+  toast(`Salvando ${files.length} arquivo(s)...`);for(const f of files)await writeFile(dh,f);
+  const nf=await readDayFiles(currentClient.id,ds);FILES_CACHE[`${currentClient.id}-${ds}`]=nf;currentDayData=nf;
+  renderFilesContent(ds,nf);renderCalendar();toast(`${files.length} arquivo(s) salvo(s)!`);
+}
+function dlBlob(url,name){const a=document.createElement('a');a.href=url;a.download=name;a.click();}
+
+// ── Client View ──
+function openClientView(){
+  if(!currentClient)return;
+  document.getElementById('cv-name').textContent=currentClient.name;
+  document.getElementById('cv-ig').textContent=currentClient.instagram||'';
+  const posts=currentClient.posts||{},dates=Object.keys(posts).sort();
+  const dn=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'],mn=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  let h='';
+  for(const ds of dates){
+    const p=posts[ds],d=new Date(ds+'T12:00:00'),dl=`${dn[d.getDay()]} ${d.getDate()} de ${mn[d.getMonth()]}`;
+    const cache=FILES_CACHE[`${currentClient.id}-${ds}`];
+    let imgs='';if(cache?.images?.length)imgs='<div class="cv-imgs">'+cache.images.map(i=>`<img src="${i.url}" alt="${i.name}" onclick="openLB('${i.url}')">`).join('')+'</div>';
+    h+=`<div class="cv-card"><div class="cv-date">${dl}</div><div class="cv-title" style="color:${currentClient.color}">${eh(p.title||'Post planejado')}</div>${p.subtitle?`<div class="cv-sub">${eh(p.subtitle)}</div>`:''}${p.caption?`<div class="cv-cap">${eh(p.caption)}</div>`:''}${p.story?`<div class="cv-story">💡 ${eh(p.story)}</div>`:''}${p.hashtags?`<div class="cv-ht">${eh(p.hashtags)}</div>`:''}${imgs}</div>`;
+  }
+  document.getElementById('cv-cards').innerHTML=h||'<div style="text-align:center;padding:40px;color:var(--text3)">Nenhum post cadastrado.</div>';
+  document.getElementById('client-view').classList.add('open');
+}
+function closeClientView(){document.getElementById('client-view').classList.remove('open');}
+
+// ── Lightbox ──
+function openLB(url){document.getElementById('lb-img').src=url;document.getElementById('lightbox').classList.add('open');}
+function closeLightbox(){document.getElementById('lightbox').classList.remove('open');document.getElementById('lb-img').src='';}
+
+// ── Sidebar ──
+function renderClientList(f=''){
+  const flt=f.toLowerCase();
+  const vis=CLIENTS.filter(c=>c.name.toLowerCase().includes(flt)||(c.instagram||'').toLowerCase().includes(flt));
+  document.getElementById('client-count').textContent=CLIENTS.length;
+  document.getElementById('client-list').innerHTML=vis.map(c=>`<div class="client-item${currentClient?.id===c.id?' active':''}" onclick="selectClient('${c.id}')"><div class="client-dot" style="background:${c.color}"></div><div><div class="client-name">${c.name}</div><div class="client-ig">${c.instagram||''}</div></div></div>`).join('');
+}
+function filterClients(){renderClientList(document.getElementById('search-input').value);}
+function selectClient(id){
+  currentClient=CLIENTS.find(c=>c.id===id);if(!currentClient)return;
+  document.getElementById('topbar-title').textContent=currentClient.name;
+  document.getElementById('month-nav').style.display='';
+  document.getElementById('btn-cv').style.display='';
+  renderClientList(document.getElementById('search-input').value);
+  renderCalendar();
+  if(rootDirHandle)refreshFolders();
+}
+function changeMonth(delta){
+  currentMonth+=delta;if(currentMonth>11){currentMonth=0;currentYear++;}if(currentMonth<0){currentMonth=11;currentYear--;}
+  renderCalendar();if(rootDirHandle)refreshFolders();
+}
+
+// ── Toast ──
+function toast(msg){let t=document.getElementById('_t');if(!t){t=document.createElement('div');t.id='_t';t.style.cssText='position:fixed;bottom:22px;right:22px;background:#238636;color:#fff;padding:8px 16px;border-radius:6px;font-size:13px;z-index:9999;transition:opacity .3s';document.body.appendChild(t);}t.textContent=msg;t.style.opacity='1';clearTimeout(t._tt);t._tt=setTimeout(()=>t.style.opacity='0',2500);}
+
+// ── Keys ──
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeLightbox();closeModal();closeClientView();}});
+
+// ── Init ──
+(async()=>{renderClientList();await tryRestoreHandle();updateFolderStatus();})();
+</script>
+</body>
+</html>
