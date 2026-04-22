@@ -45,24 +45,56 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .cal-day.today{border-color:var(--yellow)}
 .cal-day.has-post{border-left:3px solid var(--blue)}
 .cal-day.has-files::after{content:'📁';position:absolute;top:6px;right:6px;font-size:11px}
+.cal-day.status-pronto{border-color:var(--green)!important;background:rgba(63,185,80,.07)}
+.cal-day.status-pronto .cal-day-num::after{content:' ✓';color:var(--green);font-size:11px}
+.cal-day.status-revisao{border-color:var(--yellow)!important;background:rgba(227,179,65,.07)}
+.status-badge{display:inline-block;font-size:10px;padding:1px 6px;border-radius:3px;margin-top:4px;cursor:pointer;font-weight:600}
+.status-badge.pronto{background:rgba(63,185,80,.2);color:var(--green)}
+.status-badge.revisao{background:rgba(227,179,65,.2);color:var(--yellow)}
+.status-badge.pendente{background:var(--bg4);color:var(--text3)}
 .cal-day-num{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:4px}
 .cal-day-title{font-size:11px;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .cal-day-tag{display:inline-block;font-size:10px;padding:1px 5px;border-radius:3px;margin-top:4px;margin-right:2px}
 .cal-day-tag.post{background:#1f2d44;color:var(--blue)}
 .cal-day-tag.story{background:#1f2d2f;color:var(--green)}
-#modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;padding:20px;overflow-y:auto}
+#modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:100;padding:16px;overflow-y:auto}
 #modal-overlay.open{display:flex;align-items:flex-start;justify-content:center}
-#modal{background:var(--bg2);border:1px solid var(--border);border-radius:12px;width:100%;max-width:800px}
-#modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-#modal-header h3{font-size:16px;font-weight:700}
-#modal-close{background:none;border:none;color:var(--text2);font-size:22px;cursor:pointer;line-height:1;padding:0 4px}
+#modal{background:var(--bg2);border:1px solid var(--border);border-radius:12px;width:100%;max-width:1060px;display:flex;flex-direction:column;max-height:calc(100vh - 32px)}
+#modal-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-shrink:0}
+#modal-header h3{font-size:15px;font-weight:700;flex:1}
+#modal-status-bar{display:flex;align-items:center;gap:6px}
+.st-btn{border-radius:5px;padding:3px 10px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text3);transition:.15s}
+.st-btn:hover{opacity:.85}
+.st-btn.active-pendente{background:var(--bg4);color:var(--text);border-color:var(--text3)}
+.st-btn.active-revisao{background:rgba(227,179,65,.2);color:var(--yellow);border-color:var(--yellow)}
+.st-btn.active-pronto{background:rgba(63,185,80,.2);color:var(--green);border-color:var(--green)}
+#modal-close{background:none;border:none;color:var(--text2);font-size:22px;cursor:pointer;line-height:1;padding:0 4px;flex-shrink:0}
 #modal-close:hover{color:var(--text)}
-#modal-tabs{display:flex;gap:4px;padding:0 20px;border-bottom:1px solid var(--border)}
-.modal-tab{padding:10px 14px;background:none;border:none;color:var(--text2);cursor:pointer;font-size:13px;border-bottom:2px solid transparent;transition:.15s}
-.modal-tab:hover{color:var(--text)}
-.modal-tab.active{color:var(--blue);border-bottom-color:var(--blue)}
-.tab-panel{display:none;padding:20px}
-.tab-panel.active{display:block}
+#modal-body{display:flex;flex:1;overflow:hidden;min-height:0}
+#modal-left{width:310px;min-width:260px;border-right:1px solid var(--border);overflow-y:auto;padding:16px;background:var(--bg);flex-shrink:0}
+#modal-right{flex:1;overflow-y:auto;padding:20px;min-width:0}
+.ml-section-label{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px}
+.ml-feed-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px;margin-bottom:10px}
+.ml-img{aspect-ratio:1;border-radius:7px;overflow:hidden;background:var(--bg3);border:1px solid var(--border);cursor:pointer;position:relative}
+.ml-img img{width:100%;height:100%;object-fit:cover;display:block;transition:.2s}
+.ml-img:hover img{opacity:.8}
+.ml-img-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:5px;opacity:0;transition:.2s;background:rgba(0,0,0,.5)}
+.ml-img:hover .ml-img-overlay{opacity:1}
+.ml-upload{border:2px dashed var(--border);border-radius:7px;padding:12px;text-align:center;cursor:pointer;transition:.15s;margin-top:8px}
+.ml-upload:hover,.ml-upload.dragover{border-color:var(--blue);background:rgba(88,166,255,.05)}
+.ml-upload p{font-size:12px;color:var(--text2);margin-bottom:2px}
+.ml-upload small{font-size:10px;color:var(--text3)}
+.ml-video{background:var(--bg3);border-radius:7px;overflow:hidden;margin-bottom:10px}
+.ml-video video{width:100%;display:block;max-height:200px}
+.ml-video-hd{display:flex;align-items:center;justify-content:space-between;padding:6px 8px}
+.ml-empty{font-size:12px;color:var(--text3);padding:4px 0;margin-bottom:8px}
+.post-section{background:var(--bg3);border-radius:8px;padding:12px;margin-bottom:10px;position:relative}
+.post-section label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:5px}
+.post-section .val{font-size:13px;line-height:1.6;color:var(--text)}
+.post-section textarea{width:100%;background:var(--bg4);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:8px;font-size:13px;resize:vertical;font-family:inherit;outline:none;min-height:80px}
+.post-section textarea:focus{border-color:var(--blue)}
+.copy-btn{position:absolute;top:10px;right:10px;background:var(--bg4);border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer}
+.copy-btn:hover{color:var(--blue);border-color:var(--blue)}
 .post-section{background:var(--bg3);border-radius:8px;padding:12px;margin-bottom:10px;position:relative}
 .post-section label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:5px}
 .post-section .val{font-size:13px;line-height:1.6;color:var(--text)}
@@ -73,6 +105,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 #gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-bottom:12px}
 .gallery-item{aspect-ratio:1;border-radius:8px;overflow:hidden;background:var(--bg3);border:1px solid var(--border);cursor:pointer;position:relative}
 .gallery-item img{width:100%;height:100%;object-fit:cover;display:block}
+@media(max-width:700px){#modal-body{flex-direction:column}#modal-left{width:100%;border-right:none;border-bottom:1px solid var(--border);max-height:260px}}
 .gal-overlay{position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;gap:6px;opacity:0;transition:.2s}
 .gallery-item:hover .gal-overlay{opacity:1}
 .gal-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:4px 7px;font-size:11px;cursor:pointer}
@@ -108,6 +141,33 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .cv-ht{font-size:11px;color:var(--text3)}
 .cv-imgs{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .cv-imgs img{height:80px;border-radius:6px;object-fit:cover;cursor:pointer}
+#gallery-view{display:none;position:fixed;inset:0;background:var(--bg);z-index:200;overflow-y:auto;padding:24px}
+#gallery-view.open{display:block}
+#gv-header{max-width:1100px;margin:0 auto 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.gv-client{max-width:1100px;margin:0 auto 10px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.gv-client-hd{padding:13px 18px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;transition:.15s}
+.gv-client-hd:hover{background:var(--bg3)}
+.gv-client-name{font-size:14px;font-weight:700;flex:1}
+.gv-client-ig{font-size:11px;color:var(--text3);min-width:140px}
+.gv-toggle{color:var(--text3);font-size:12px;transition:.2s;width:16px;text-align:center}
+.gv-client-body{display:none;border-top:1px solid var(--border)}
+.gv-client-body.open{display:block}
+.gv-day{padding:14px 18px;border-bottom:1px solid var(--border)}
+.gv-day:last-child{border-bottom:none}
+.gv-day-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px}
+.gv-day-title{font-size:13px;font-weight:700}
+.gv-day-path{font-size:10px;color:var(--text3);font-family:monospace;background:var(--bg3);padding:2px 7px;border-radius:4px}
+.gv-imgs-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.gv-img-wrap{position:relative;width:110px;height:110px;border-radius:7px;overflow:hidden;border:1px solid var(--border);cursor:pointer;background:var(--bg3);flex-shrink:0}
+.gv-img-wrap img{width:100%;height:100%;object-fit:cover;display:block}
+.gv-img-overlay{position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;gap:5px;opacity:0;transition:.2s}
+.gv-img-wrap:hover .gv-img-overlay{opacity:1}
+.gv-video-wrap{width:110px;height:110px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:28px;gap:4px;flex-shrink:0;position:relative}
+.gv-video-wrap .gv-img-overlay{border-radius:7px}
+.gv-empty{font-size:12px;color:var(--text3);margin-bottom:8px}
+.gv-add-btn{display:inline-flex;align-items:center;gap:5px;background:var(--bg3);border:1px dashed var(--border);color:var(--text2);border-radius:6px;padding:5px 11px;font-size:12px;cursor:pointer;transition:.15s}
+.gv-add-btn:hover{border-color:var(--blue);color:var(--blue)}
+.gv-loading{color:var(--text3);font-size:12px;padding:14px 18px}
 #lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:300;align-items:center;justify-content:center}
 #lightbox.open{display:flex}
 #lightbox img{max-width:90vw;max-height:90vh;object-fit:contain;border-radius:8px}
@@ -129,6 +189,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   <div id="sidebar-footer">
     <button id="btn-folder" onclick="pickRootFolder()">📂 Selecionar pasta raiz</button>
     <div id="folder-status">Nenhuma pasta conectada</div>
+    <button id="btn-gallery" onclick="openGalleryView()" style="width:100%;margin-top:7px;padding:7px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:6px;cursor:pointer;font-size:12px;transition:.15s" onmouseover="this.style.borderColor='var(--purple)';this.style.color='var(--purple)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">🖼 Galeria Geral</button>
   </div>
 </div>
 <div id="main">
@@ -158,14 +219,17 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   <div id="modal">
     <div id="modal-header">
       <h3 id="modal-title"></h3>
+      <div id="modal-status-bar"></div>
       <button id="modal-close" onclick="closeModal()">×</button>
     </div>
-    <div id="modal-tabs">
-      <button class="modal-tab active" onclick="switchTab('content')">📝 Conteúdo</button>
-      <button class="modal-tab" onclick="switchTab('files')">📁 Arquivos</button>
+    <div id="modal-body">
+      <div id="modal-left">
+        <div id="modal-left-content"></div>
+      </div>
+      <div id="modal-right">
+        <div id="post-content"></div>
+      </div>
     </div>
-    <div id="tab-content" class="tab-panel active"><div id="post-content"></div></div>
-    <div id="tab-files" class="tab-panel"><div id="files-content"></div></div>
   </div>
 </div>
 
@@ -179,6 +243,21 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   </div>
   <div id="cv-cards"></div>
 </div>
+
+<div id="gallery-view">
+  <div id="gv-header">
+    <div>
+      <div style="font-size:20px;font-weight:700">🖼 Galeria de Arquivos</div>
+      <div style="font-size:13px;color:var(--text3);margin-top:3px" id="gv-month-label"></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="tb-btn" onclick="loadAllOpenGvClients()">↺ Recarregar abertos</button>
+      <button class="tb-btn" onclick="closeGalleryView()">✕ Fechar</button>
+    </div>
+  </div>
+  <div id="gv-content"></div>
+</div>
+<input type="file" id="gv-file-input" multiple accept="image/*,video/*" style="display:none" onchange="handleGvFileInput(event)">
 
 <div id="lightbox" onclick="if(event.target===this||event.target.id==='lightbox')closeLightbox()">
   <button id="lb-close" onclick="closeLightbox()">×</button>
@@ -376,6 +455,11 @@ const CLIENTS=[
 let currentClient=null,currentYear=2026,currentMonth=3;
 let rootDirHandle=null,currentDayData=null;
 const FILES_CACHE={};
+const STATUS_KEY='tc_day_status';
+function loadStatus(){try{return JSON.parse(localStorage.getItem(STATUS_KEY)||'{}');}catch{return {};}}
+function saveStatus(s){localStorage.setItem(STATUS_KEY,JSON.stringify(s));}
+function getDayStatus(cid,ds){return loadStatus()[`${cid}__${ds}`]||'pendente';}
+function setDayStatus(cid,ds,val){const s=loadStatus();s[`${cid}__${ds}`]=val;saveStatus(s);}
 
 // ── IndexedDB ──
 function openDB(){return new Promise((r,j)=>{const q=indexedDB.open('tcp3',1);q.onupgradeneeded=e=>e.target.result.createObjectStore('h',{keyPath:'k'});q.onsuccess=e=>r(e.target.result);q.onerror=j});}
@@ -398,20 +482,30 @@ function updateFolderStatus(){
 async function getDirAt(path,create=false){
   let h=rootDirHandle;for(const s of path){try{h=await h.getDirectoryHandle(s,{create});}catch{return null;}}return h;
 }
-function dayFolder(ds){const d=new Date(ds+'T12:00:00'),dows=['DOM','SEG','TER','QUA','QUI','SEX','SAB'];return`${dows[d.getDay()]}_${String(d.getDate()).padStart(2,'0')}`;}
+function dayFolder(ds){const d=new Date(ds+'T12:00:00'),dows=['dom','seg','ter','qua','qui','sex','sab'],mons=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];return`${dows[d.getDay()]}_${String(d.getDate()).padStart(2,'0')}${mons[d.getMonth()]}`;}
+function weekFolder(ds){const d=new Date(ds+'T12:00:00'),day=d.getDate(),first=new Date(d.getFullYear(),d.getMonth(),1).getDay();return`semana${Math.ceil((day+first)/7)}`;}
 function monthFolder(y,m){if(y===2026&&m===3)return'04_Abril_2026';const mn=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];return`${String(m+1).padStart(2,'0')}_${mn[m]}_${y}`;}
 async function readDayFiles(cid,ds){
   if(!rootDirHandle)return null;
-  const dh=await getDirAt(['clientes',cid,monthFolder(currentYear,currentMonth),dayFolder(ds)]);
+  const dh=await getDirAt(['clientes',cid,monthFolder(currentYear,currentMonth),weekFolder(ds),dayFolder(ds)]);
   const res={images:[],video:null,txt:null,folderHandle:dh};
   if(!dh)return res;
-  try{for await(const[n,h]of dh.entries()){if(h.kind!=='file')continue;const lo=n.toLowerCase();const f=await h.getFile();
-    if(/\.(jpg|jpeg|png|gif|webp)$/.test(lo))res.images.push({name:n,handle:h,url:URL.createObjectURL(f),file:f});
-    else if(/\.(mp4|mov|webm|avi)$/.test(lo))res.video={name:n,handle:h,url:URL.createObjectURL(f),file:f};
-    else if(/\.txt$/.test(lo))res.txt={name:n,handle:h,content:await f.text()};
-  }}catch(e){console.error(e);}return res;
+  try{
+    const feedH=await dh.getDirectoryHandle('Feed',{create:false}).catch(()=>null);
+    if(feedH)for await(const[n,h]of feedH.entries()){if(h.kind!=='file')continue;const lo=n.toLowerCase();if(/\.(jpg|jpeg|png|gif|webp)$/.test(lo)){const f=await h.getFile();res.images.push({name:n,handle:h,url:URL.createObjectURL(f),file:f});}}
+    const storH=await dh.getDirectoryHandle('Stories',{create:false}).catch(()=>null);
+    if(storH)for await(const[n,h]of storH.entries()){if(h.kind!=='file')continue;const lo=n.toLowerCase();if(/\.(mp4|mov|webm|avi)$/.test(lo)&&!res.video){const f=await h.getFile();res.video={name:n,handle:h,url:URL.createObjectURL(f),file:f};}}
+    for await(const[n,h]of dh.entries()){if(h.kind!=='file')continue;if(/\.txt$/.test(n.toLowerCase())){const f=await h.getFile();res.txt={name:n,handle:h,content:await f.text()};}}
+  }catch(e){console.error(e);}return res;
 }
-async function ensureDayFolder(cid,ds){const b=await getDirAt(['clientes',cid,monthFolder(currentYear,currentMonth)],true);if(!b)return null;return b.getDirectoryHandle(dayFolder(ds),{create:true});}
+async function ensureDayFolder(cid,ds){
+  const b=await getDirAt(['clientes',cid,monthFolder(currentYear,currentMonth)],true);if(!b)return null;
+  const wk=await b.getDirectoryHandle(weekFolder(ds),{create:true});
+  const dh=await wk.getDirectoryHandle(dayFolder(ds),{create:true});
+  await dh.getDirectoryHandle('Feed',{create:true});
+  await dh.getDirectoryHandle('Stories',{create:true});
+  return dh;
+}
 async function writeFile(dh,f){const fh=await dh.getFileHandle(f.name,{create:true});const w=await fh.createWritable();await w.write(f);await w.close();}
 async function writeTxt(cid,ds,content){let dh=currentDayData?.folderHandle;if(!dh)dh=await ensureDayFolder(cid,ds);if(!dh)return;const fh=await dh.getFileHandle('descricao.txt',{create:true});const w=await fh.createWritable();await w.write(content);await w.close();}
 
@@ -429,10 +523,12 @@ function renderCalendar(){
     const post=currentClient.posts?.[ds],cache=FILES_CACHE[`${currentClient.id}-${ds}`];
     const hasF=cache?.images?.length>0||!!cache?.video;
     const isT=today.getFullYear()===y&&today.getMonth()===m&&today.getDate()===d;
-    let cls='cal-day';if(isT)cls+=' today';if(post)cls+=' has-post';if(hasF)cls+=' has-files';
+    const st=getDayStatus(currentClient.id,ds);
+    let cls='cal-day';if(isT)cls+=' today';if(post)cls+=' has-post';if(hasF)cls+=' has-files';if(st!=='pendente')cls+=` status-${st}`;
     const df=dayFolder(ds);
     let inner=`<div class="cal-day-num">${d} <small style="color:var(--text3);font-size:9px">${df.split('_')[0]}</small></div>`;
     if(post){inner+=`<div class="cal-day-title" style="color:${currentClient.color}">${eh(post.title||'—')}</div>`;if(post.story)inner+=`<span class="cal-day-tag story">Story</span>`;inner+=`<span class="cal-day-tag post">Post</span>`;}
+    if(post&&st!=='pendente')inner+=`<span class="status-badge ${st}">${st==='pronto'?'✓ Pronto':'⚠ Revisão'}</span>`;
     h+=`<div class="${cls}" onclick="openDay('${ds}')">${inner}</div>`;
   }
   h+=`</div>`;
@@ -453,21 +549,27 @@ async function openDay(ds){
   const d=new Date(ds+'T12:00:00');
   const dn=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'],mn=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   document.getElementById('modal-title').textContent=`${dn[d.getDay()]}, ${d.getDate()} de ${mn[d.getMonth()]} ${d.getFullYear()}`;
-  switchTab('content');renderPostContent(ds);
+  renderStatusBar(ds);
+  renderPostContent(ds);
+  renderDayLeft(ds,null);
+  document.getElementById('modal-overlay').classList.add('open');
   let files=FILES_CACHE[`${currentClient.id}-${ds}`]||null;
   if(!files&&rootDirHandle){files=await readDayFiles(currentClient.id,ds);if(files)FILES_CACHE[`${currentClient.id}-${ds}`]=files;}
-  currentDayData=files;renderFilesContent(ds,files);
-  document.getElementById('modal-overlay').classList.add('open');
+  currentDayData=files;
+  renderDayLeft(ds,files);
 }
 function closeModal(){document.getElementById('modal-overlay').classList.remove('open');currentDayData=null;}
-function switchTab(tab){
-  document.querySelectorAll('.modal-tab').forEach((b,i)=>b.classList.toggle('active',(i===0&&tab==='content')||(i===1&&tab==='files')));
-  document.getElementById('tab-content').classList.toggle('active',tab==='content');
-  document.getElementById('tab-files').classList.toggle('active',tab==='files');
+
+function renderStatusBar(ds){
+  const st=getDayStatus(currentClient?.id,ds);
+  document.getElementById('modal-status-bar').innerHTML=
+    `<button class="st-btn${st==='pendente'?' active-pendente':''}" onclick="changeDayStatus('${ds}','pendente')">⬜ Pendente</button>`+
+    `<button class="st-btn${st==='revisao'?' active-revisao':''}" onclick="changeDayStatus('${ds}','revisao')">⚠ Revisão</button>`+
+    `<button class="st-btn${st==='pronto'?' active-pronto':''}" onclick="changeDayStatus('${ds}','pronto')">✓ Pronto</button>`;
 }
 function renderPostContent(ds){
   const post=currentClient?.posts?.[ds],el=document.getElementById('post-content');
-  if(!post){el.innerHTML=`<div style="color:var(--text3);padding:20px;text-align:center">Nenhum post planejado para este dia.<br><small>Adicione arquivos na aba 📁 Arquivos.</small></div>`;return;}
+  if(!post){el.innerHTML=`<div style="color:var(--text3);padding:30px;text-align:center;font-size:13px">Nenhum post planejado para este dia.</div>`;return;}
   let h='';
   if(post.title)h+=sec('TÍTULO',post.title,true);
   if(post.subtitle)h+=sec('SUBTÍTULO',post.subtitle,true);
@@ -561,49 +663,98 @@ function buildPrompt(post,client){
   return lines.join('\n');
 }
 
-function renderFilesContent(ds,files){
-  const el=document.getElementById('files-content'),df=dayFolder(ds),noRoot=!rootDirHandle;
-  let h=`<div class="upload-zone" id="upload-zone"
+function renderDayLeft(ds,files){
+  const el=document.getElementById('modal-left-content');
+  if(!files){el.innerHTML=`<div style="color:var(--text3);font-size:12px;padding:10px 0"><span class="spinner"></span> Carregando arquivos...</div>`;return;}
+  const noRoot=!rootDirHandle;
+  let h='';
+  // Feed section
+  h+=`<div class="ml-section-label" style="color:var(--blue)">📸 Feed</div>`;
+  if(files.images?.length){
+    h+=`<div class="ml-feed-grid">`;
+    files.images.forEach(img=>{
+      h+=`<div class="ml-img" onclick="openLB('${img.url}')">
+        <img src="${img.url}" alt="${img.name}" loading="lazy">
+        <div class="ml-img-overlay">
+          <button class="gal-btn" onclick="event.stopPropagation();openLB('${img.url}')">👁</button>
+          <button class="gal-btn" onclick="event.stopPropagation();dlBlob('${img.url}','${img.name}')">⬇</button>
+        </div>
+      </div>`;
+    });
+    h+=`</div>`;
+  } else {
+    h+=`<div class="ml-empty">Nenhuma imagem no Feed.</div>`;
+  }
+  h+=`<div class="ml-upload" id="feed-upload-zone"
     ondragover="event.preventDefault();this.classList.add('dragover')"
     ondragleave="this.classList.remove('dragover')"
-    ondrop="handleDrop(event,'${ds}')"
-    onclick="triggerUpload('${ds}')">
-    <p>📂 Soltar arquivos aqui ou clique para selecionar</p>
-    <small>JPG/PNG → post/carrossel &nbsp;|&nbsp; MP4/MOV → story &nbsp;|&nbsp; TXT → descrição</small>
-    ${noRoot?'<br><small style="color:var(--red)">⚠ Conecte a pasta raiz primeiro (barra lateral)</small>':''}
-  </div>
-  <input type="file" id="file-input" multiple style="display:none" onchange="handleFileInput(event,'${ds}')">`;
-  const empty=!files||((!files.images||!files.images.length)&&!files.video&&!files.txt);
-  if(empty){h+=`<div class="no-files">Pasta <code style="color:var(--blue)">${df}/</code> vazia ou não encontrada.</div>`;}
-  else{
-    if(files.images?.length){
-      h+=`<div class="sec-label" style="margin-bottom:8px">IMAGENS (${files.images.length})</div><div id="gallery">`;
-      files.images.forEach(img=>{h+=`<div class="gallery-item" onclick="openLB('${img.url}')"><img src="${img.url}" alt="${img.name}"><div class="gal-overlay"><button class="gal-btn" onclick="event.stopPropagation();openLB('${img.url}')">👁</button><button class="gal-btn" onclick="event.stopPropagation();dlBlob('${img.url}','${img.name}')">⬇</button></div></div>`;});
-      h+=`</div>`;
-    }
-    if(files.video){h+=`<div class="video-wrap"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><span class="sec-label">STORY / VÍDEO</span><button class="dl-btn" onclick="dlBlob('${files.video.url}','${files.video.name}')">⬇ ${files.video.name}</button></div><video src="${files.video.url}" controls></video></div>`;}
-    if(files.txt){h+=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><span class="sec-label">DESCRIÇÃO (descricao.txt)</span><button class="dl-btn" id="dl-txt-btn">⬇ descricao.txt</button></div><div class="post-section"><textarea id="desc-ta" style="min-height:120px">${eh(files.txt.content)}</textarea></div><button class="tb-btn" onclick="saveTxtEdit('${ds}')">💾 Salvar TXT</button>`;}
-    const hasD=files.images?.length||files.video;
-    if(hasD){h+=`<div class="dl-row" style="margin-top:12px">`;(files.images||[]).forEach(img=>{h+=`<button class="dl-btn" onclick="dlBlob('${img.url}','${img.name}')">⬇ ${img.name}</button>`;});if(files.video)h+=`<button class="dl-btn" onclick="dlBlob('${files.video.url}','${files.video.name}')">⬇ ${files.video.name}</button>`;h+=`</div>`;}
+    ondrop="handleDropTarget(event,'${ds}','feed')"
+    onclick="triggerUploadTarget('${ds}','feed')">
+    <p>+ Adicionar imagens</p>
+    <small>JPG / PNG / WEBP</small>
+    ${noRoot?'<br><small style="color:var(--red)">⚠ Conecte a pasta raiz</small>':''}
+  </div>`;
+  // Stories section
+  h+=`<div class="ml-section-label" style="color:var(--purple);margin-top:18px">🎬 Stories</div>`;
+  if(files.video){
+    h+=`<div class="ml-video">
+      <div class="ml-video-hd"><span style="font-size:11px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${files.video.name}</span><button class="dl-btn" onclick="dlBlob('${files.video.url}','${files.video.name}')">⬇</button></div>
+      <video src="${files.video.url}" controls style="width:100%;max-height:180px;display:block"></video>
+    </div>`;
+  } else {
+    h+=`<div class="ml-empty">Nenhum vídeo no Stories.</div>`;
+  }
+  h+=`<div class="ml-upload"
+    ondragover="event.preventDefault();this.classList.add('dragover')"
+    ondragleave="this.classList.remove('dragover')"
+    ondrop="handleDropTarget(event,'${ds}','stories')"
+    onclick="triggerUploadTarget('${ds}','stories')">
+    <p>+ Adicionar vídeo</p>
+    <small>MP4 / MOV</small>
+    ${noRoot?'<br><small style="color:var(--red)">⚠ Conecte a pasta raiz</small>':''}
+  </div>`;
+  if(files.txt){
+    h+=`<div style="margin-top:18px">
+      <div class="ml-section-label" style="color:var(--text2)">📄 Descrição</div>
+      <textarea id="desc-ta" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:8px;font-size:11px;resize:vertical;min-height:80px;outline:none">${eh(files.txt.content)}</textarea>
+      <button class="tb-btn" style="margin-top:6px;font-size:11px" onclick="saveTxtEdit('${ds}')">💾 Salvar</button>
+      <button class="dl-btn" style="margin-top:6px" onclick="(()=>{const ta=document.getElementById('desc-ta');const b=new Blob([ta.value],{type:'text/plain;charset=utf-8'});dlBlob(URL.createObjectURL(b),'descricao.txt');})()">⬇ Baixar</button>
+    </div>`;
   }
   const post=currentClient?.posts?.[ds];
-  if(post)h+=`<div style="margin-top:14px;border-top:1px solid var(--border);padding-top:14px"><button class="tb-btn" onclick="saveSeedTxt('${ds}')">📋 Criar descricao.txt do calendário</button><small style="color:var(--text3);margin-left:8px">Gera TXT com título, legenda e hashtags</small></div>`;
+  if(post){
+    h+=`<div style="margin-top:16px;border-top:1px solid var(--border);padding-top:12px">
+      <button class="tb-btn" style="width:100%;font-size:11px" onclick="saveSeedTxt('${ds}')">📋 Gerar descricao.txt</button>
+    </div>`;
+  }
+  h+=`<input type="file" id="file-input-feed" multiple accept="image/*" style="display:none" onchange="handleFileInputTarget(event,'${ds}','feed')">`;
+  h+=`<input type="file" id="file-input-stories" multiple accept="video/*" style="display:none" onchange="handleFileInputTarget(event,'${ds}','stories')">`;
   el.innerHTML=h;
-  const dlb=document.getElementById('dl-txt-btn');
-  if(dlb&&files?.txt){dlb.onclick=()=>{const ta=document.getElementById('desc-ta');const blob=new Blob([ta?ta.value:files.txt.content],{type:'text/plain;charset=utf-8'});dlBlob(URL.createObjectURL(blob),'descricao.txt');};}
 }
 function buildDesc(post){let t='';if(post.title)t+=`TÍTULO: ${post.title}\n`;if(post.subtitle)t+=`SUBTÍTULO: ${post.subtitle}\n`;if(post.cta)t+=`\nCTA:\n${post.cta}\n`;if(post.caption)t+=`\nLEGENDA:\n${post.caption}\n`;if(post.hashtags)t+=`\nHASHTAGS:\n${post.hashtags}\n`;if(post.story)t+=`\nSTORY:\n${post.story}\n`;return t;}
-async function saveSeedTxt(ds){if(!rootDirHandle){alert('Conecte a pasta raiz primeiro.');return;}const post=currentClient?.posts?.[ds];if(!post)return;await writeTxt(currentClient.id,ds,buildDesc(post));toast('descricao.txt criado!');const f=await readDayFiles(currentClient.id,ds);FILES_CACHE[`${currentClient.id}-${ds}`]=f;currentDayData=f;renderFilesContent(ds,f);}
+async function saveSeedTxt(ds){if(!rootDirHandle){alert('Conecte a pasta raiz primeiro.');return;}const post=currentClient?.posts?.[ds];if(!post)return;await writeTxt(currentClient.id,ds,buildDesc(post));toast('descricao.txt criado!');const f=await readDayFiles(currentClient.id,ds);FILES_CACHE[`${currentClient.id}-${ds}`]=f;currentDayData=f;renderDayLeft(ds,f);}
 async function saveTxtEdit(ds){if(!rootDirHandle)return;const ta=document.getElementById('desc-ta');if(!ta)return;await writeTxt(currentClient.id,ds,ta.value);toast('Salvo!');}
-function triggerUpload(ds){if(!rootDirHandle){alert('Conecte a pasta raiz primeiro (barra lateral).');return;}document.getElementById('file-input').setAttribute('data-date',ds);document.getElementById('file-input').click();}
-async function handleFileInput(ev,ds){const files=Array.from(ev.target.files);if(files.length)await uploadFiles(files,ds);ev.target.value='';}
-async function handleDrop(ev,ds){ev.preventDefault();document.getElementById('upload-zone')?.classList.remove('dragover');if(!rootDirHandle){alert('Conecte a pasta raiz primeiro.');return;}const files=Array.from(ev.dataTransfer.files);if(files.length)await uploadFiles(files,ds);}
-async function uploadFiles(files,ds){
+function triggerUploadTarget(ds,target){
+  if(!rootDirHandle){alert('Conecte a pasta raiz primeiro (barra lateral).');return;}
+  const id=target==='stories'?'file-input-stories':'file-input-feed';
+  document.getElementById(id)?.click();
+}
+async function handleFileInputTarget(ev,ds,target){const files=Array.from(ev.target.files);if(files.length)await uploadFiles(files,ds,target);ev.target.value='';}
+async function handleDropTarget(ev,ds,target){ev.preventDefault();ev.currentTarget?.classList.remove('dragover');if(!rootDirHandle){alert('Conecte a pasta raiz primeiro.');return;}const files=Array.from(ev.dataTransfer.files);if(files.length)await uploadFiles(files,ds,target);}
+async function uploadFiles(files,ds,target='auto'){
   if(!rootDirHandle)return;
   let dh=currentDayData?.folderHandle;if(!dh)dh=await ensureDayFolder(currentClient.id,ds);if(!dh){alert('Não foi possível criar a pasta.');return;}
-  toast(`Salvando ${files.length} arquivo(s)...`);for(const f of files)await writeFile(dh,f);
+  const feedH=await dh.getDirectoryHandle('Feed',{create:true});
+  const storH=await dh.getDirectoryHandle('Stories',{create:true});
+  toast(`Salvando ${files.length} arquivo(s)...`);
+  for(const f of files){
+    const lo=f.name.toLowerCase();
+    const isVid=/\.(mp4|mov|webm|avi)$/.test(lo);
+    const dest=target==='stories'?storH:target==='feed'?feedH:isVid?storH:feedH;
+    await writeFile(dest,f);
+  }
   const nf=await readDayFiles(currentClient.id,ds);FILES_CACHE[`${currentClient.id}-${ds}`]=nf;currentDayData=nf;
-  renderFilesContent(ds,nf);renderCalendar();toast(`${files.length} arquivo(s) salvo(s)!`);
+  renderDayLeft(ds,nf);renderCalendar();toast(`${files.length} arquivo(s) salvo(s)!`);
 }
 function dlBlob(url,name){const a=document.createElement('a');a.href=url;a.download=name;a.click();}
 
@@ -655,8 +806,165 @@ function changeMonth(delta){
 // ── Toast ──
 function toast(msg){let t=document.getElementById('_t');if(!t){t=document.createElement('div');t.id='_t';t.style.cssText='position:fixed;bottom:22px;right:22px;background:#238636;color:#fff;padding:8px 16px;border-radius:6px;font-size:13px;z-index:9999;transition:opacity .3s';document.body.appendChild(t);}t.textContent=msg;t.style.opacity='1';clearTimeout(t._tt);t._tt=setTimeout(()=>t.style.opacity='0',2500);}
 
+// ── Gallery View ──
+let gvCurrentCid=null,gvCurrentDs=null,gvCurrentTarget='auto';
+
+function openGalleryView(){
+  const mn=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  document.getElementById('gv-month-label').textContent=`${mn[currentMonth]} ${currentYear}`;
+  renderGvList();
+  document.getElementById('gallery-view').classList.add('open');
+}
+function closeGalleryView(){document.getElementById('gallery-view').classList.remove('open');}
+
+function renderGvList(){
+  document.getElementById('gv-content').innerHTML=CLIENTS.map(c=>`
+    <div class="gv-client" id="gvc-${c.id}">
+      <div class="gv-client-hd" onclick="toggleGvClient('${c.id}')">
+        <div class="client-dot" style="background:${c.color}"></div>
+        <div class="gv-client-name">${c.name}</div>
+        <div class="gv-client-ig">${c.instagram||''}</div>
+        <span class="badge" id="gvbadge-${c.id}" style="background:var(--bg4);color:var(--text3)">—</span>
+        <span class="gv-toggle" id="gvt-${c.id}">▶</span>
+      </div>
+      <div class="gv-client-body" id="gvb-${c.id}">
+        <div class="gv-loading">Clique para expandir e carregar arquivos.</div>
+      </div>
+    </div>`).join('');
+}
+
+async function toggleGvClient(cid){
+  const body=document.getElementById(`gvb-${cid}`);
+  const toggle=document.getElementById(`gvt-${cid}`);
+  const isOpen=body.classList.contains('open');
+  if(isOpen){body.classList.remove('open');toggle.textContent='▶';return;}
+  body.classList.add('open');toggle.textContent='▼';
+  body.innerHTML='<div class="gv-loading"><span class="spinner"></span> Carregando arquivos...</div>';
+  await renderGvClient(cid);
+}
+
+async function renderGvClient(cid){
+  const client=CLIENTS.find(c=>c.id===cid);
+  const body=document.getElementById(`gvb-${cid}`);
+  if(!client||!body)return;
+  const posts=client.posts||{};
+  const dates=Object.keys(posts).filter(ds=>{const d=new Date(ds+'T12:00:00');return d.getFullYear()===currentYear&&d.getMonth()===currentMonth;}).sort();
+  if(!dates.length){body.innerHTML='<div class="gv-loading">Nenhum post planejado neste mês.</div>';return;}
+  let totalImgs=0;
+  let h='';
+  for(const ds of dates){
+    const post=posts[ds];
+    const d=new Date(ds+'T12:00:00');
+    const dn=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'],mn=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    const label=`${dn[d.getDay()]} ${d.getDate()} de ${mn[d.getMonth()]}`;
+    const wk=weekFolder(ds),df=dayFolder(ds),path=`${wk}/${df}/`;
+    let files=FILES_CACHE[`${cid}-${ds}`];
+    if(!files&&rootDirHandle)files=await readDayFilesFor(cid,ds);
+    const imgs=files?.images||[];
+    totalImgs+=imgs.length+(files?.video?1:0);
+    const feedImgsH=imgs.map(img=>`<div class="gv-img-wrap" onclick="openLB('${img.url}')"><img src="${img.url}" alt="${img.name}"><div class="gv-img-overlay"><button class="gal-btn" onclick="event.stopPropagation();openLB('${img.url}')">👁</button><button class="gal-btn" onclick="event.stopPropagation();dlBlob('${img.url}','${img.name}')">⬇</button></div></div>`).join('');
+    const vidH=files?.video?`<div class="gv-video-wrap" title="${files.video.name}"><div>🎬</div><div style="font-size:9px;color:var(--text3);padding:0 6px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100px">${files.video.name}</div><div class="gv-img-overlay" style="border-radius:7px"><button class="gal-btn" onclick="event.stopPropagation();dlBlob('${files.video.url}','${files.video.name}')">⬇</button></div></div>`:'';
+    h+=`<div class="gv-day">
+      <div class="gv-day-hd">
+        <div><div class="gv-day-title" style="color:${client.color}">${eh(post.title||label)} <span style="color:var(--text3);font-weight:400;font-size:12px">— ${label}</span></div></div>
+        <span class="gv-day-path">${path}</span>
+      </div>
+      <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:10px">
+        <div style="flex:1;min-width:180px">
+          <div style="font-size:10px;font-weight:700;color:var(--blue);letter-spacing:.06em;text-transform:uppercase;margin-bottom:7px">📸 Feed</div>
+          ${imgs.length?`<div class="gv-imgs-row">${feedImgsH}</div>`:'<div class="gv-empty">Sem imagens no Feed.</div>'}
+          <button class="gv-add-btn" onclick="triggerGvUpload('${cid}','${ds}','feed')">+ Adicionar ao Feed</button>
+        </div>
+        <div style="flex:1;min-width:180px">
+          <div style="font-size:10px;font-weight:700;color:var(--purple);letter-spacing:.06em;text-transform:uppercase;margin-bottom:7px">🎬 Stories</div>
+          ${files?.video?`<div class="gv-imgs-row">${vidH}</div>`:'<div class="gv-empty">Sem vídeo no Stories.</div>'}
+          <button class="gv-add-btn" onclick="triggerGvUpload('${cid}','${ds}','stories')">+ Adicionar ao Stories</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  body.innerHTML=h;
+  const badge=document.getElementById(`gvbadge-${cid}`);
+  if(badge){badge.textContent=totalImgs?`${totalImgs} arquivo${totalImgs>1?'s':''}`:rootDirHandle?'0 arquivos':'sem pasta';badge.style.color=totalImgs?'var(--green)':'var(--text3)';}
+}
+
+async function readDayFilesFor(cid,ds){
+  const dh=await getDirAt(['clientes',cid,monthFolder(currentYear,currentMonth),weekFolder(ds),dayFolder(ds)]);
+  const res={images:[],video:null,txt:null,folderHandle:dh};
+  if(!dh)return res;
+  try{
+    const feedH=await dh.getDirectoryHandle('Feed',{create:false}).catch(()=>null);
+    if(feedH)for await(const[n,h]of feedH.entries()){if(h.kind!=='file')continue;const lo=n.toLowerCase();if(/\.(jpg|jpeg|png|gif|webp)$/.test(lo)){const f=await h.getFile();res.images.push({name:n,handle:h,url:URL.createObjectURL(f),file:f});}}
+    const storH=await dh.getDirectoryHandle('Stories',{create:false}).catch(()=>null);
+    if(storH)for await(const[n,h]of storH.entries()){if(h.kind!=='file')continue;const lo=n.toLowerCase();if(/\.(mp4|mov|webm|avi)$/.test(lo)&&!res.video){const f=await h.getFile();res.video={name:n,handle:h,url:URL.createObjectURL(f),file:f};}}
+    for await(const[n,h]of dh.entries()){if(h.kind!=='file')continue;if(/\.txt$/.test(n.toLowerCase())){const f=await h.getFile();res.txt={name:n,handle:h,content:await f.text()};}}
+  }catch(e){}
+  FILES_CACHE[`${cid}-${ds}`]=res;
+  return res;
+}
+
+function triggerGvUpload(cid,ds,target='auto'){
+  if(!rootDirHandle){alert('Conecte a pasta raiz primeiro (barra lateral).');return;}
+  gvCurrentCid=cid;gvCurrentDs=ds;gvCurrentTarget=target;
+  const inp=document.getElementById('gv-file-input');
+  inp.accept=target==='stories'?'video/*':target==='feed'?'image/*':'image/*,video/*';
+  inp.click();
+}
+
+async function handleGvFileInput(ev){
+  const files=Array.from(ev.target.files);ev.target.value='';
+  if(!files.length||!gvCurrentCid||!gvCurrentDs)return;
+  const cid=gvCurrentCid,ds=gvCurrentDs;
+  toast(`Salvando ${files.length} arquivo(s)...`);
+  let dh=FILES_CACHE[`${cid}-${ds}`]?.folderHandle;
+  if(!dh)dh=await ensureDayFolderFor(cid,ds);
+  if(!dh){alert('Não foi possível criar a pasta.');return;}
+  const feedH=await dh.getDirectoryHandle('Feed',{create:true});
+  const storH=await dh.getDirectoryHandle('Stories',{create:true});
+  for(const f of files){
+    const lo=f.name.toLowerCase();
+    const isVid=/\.(mp4|mov|webm|avi)$/.test(lo);
+    const dest=gvCurrentTarget==='stories'?storH:gvCurrentTarget==='feed'?feedH:isVid?storH:feedH;
+    await writeFile(dest,f);
+  }
+  await readDayFilesFor(cid,ds);
+  toast(`${files.length} arquivo(s) salvo(s)!`);
+  await renderGvClient(cid);
+}
+
+async function ensureDayFolderFor(cid,ds){
+  const b=await getDirAt(['clientes',cid,monthFolder(currentYear,currentMonth)],true);
+  if(!b)return null;
+  const wk=await b.getDirectoryHandle(weekFolder(ds),{create:true});
+  const dh=await wk.getDirectoryHandle(dayFolder(ds),{create:true});
+  await dh.getDirectoryHandle('Feed',{create:true});
+  await dh.getDirectoryHandle('Stories',{create:true});
+  return dh;
+}
+
+async function loadAllOpenGvClients(){
+  if(!rootDirHandle){alert('Conecte a pasta raiz primeiro.');return;}
+  const open=document.querySelectorAll('.gv-client-body.open');
+  for(const b of open){
+    const cid=b.id.replace('gvb-','');
+    b.innerHTML='<div class="gv-loading"><span class="spinner"></span> Recarregando...</div>';
+    await renderGvClient(cid);
+  }
+  toast('Atualizado!');
+}
+
+// ── Day Status ──
+function changeDayStatus(ds,val){
+  if(!currentClient)return;
+  setDayStatus(currentClient.id,ds,val);
+  renderStatusBar(ds);
+  renderCalendar();
+  const labels={pendente:'Pendente',revisao:'Em Revisão',pronto:'Pronto'};
+  toast(`Status: ${labels[val]}`);
+}
+
 // ── Keys ──
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeLightbox();closeModal();closeClientView();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeLightbox();closeModal();closeClientView();closeGalleryView();}});
 
 // ── Init ──
 (async()=>{renderClientList();await tryRestoreHandle();updateFolderStatus();})();
